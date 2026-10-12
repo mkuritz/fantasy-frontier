@@ -42,6 +42,14 @@ jobs:
         continue-on-error: true
         timeout-minutes: 6
         run: python scripts/ff_xcheck.py
+      - name: Pre-lock lineup snapshot (append-only accountability log)
+        continue-on-error: true
+        run: |
+          for k in thu sun mon; do [ -f data/slate_$k.json ] && node scripts/snapshot_lineups.js $k || true; done
+      - name: Grade logged lineups after games (ESPN public box score)
+        continue-on-error: true
+        timeout-minutes: 4
+        run: python scripts/score_lineups.py
       - name: Commit if data changed
         run: |
           git config user.name "github-actions[bot]"
