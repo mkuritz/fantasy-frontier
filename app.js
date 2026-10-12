@@ -210,6 +210,7 @@ function pMethod(m){const M=S.meta||{};const sm=M.slates||{};m.innerHTML=`<div c
   <p><b>Scoring:</b> ${esc(M.scoring||'')}. Showdown Captain earns 1.5x points at 1.5x salary.</p>
   <p><b>Optimizer:</b> an exact integer program (branch and bound) solved in your browser. It handles the cap, roster slots, locks and excludes, max exposure, QB stacks, bring-backs, min unique players between lineups, and showdown game scripts. Contest type and entry fee set the risk profile. Cash leans on floor, and GPP leans on ceiling minus estimated chalk with some randomness.</p></div></div>
   <div class="card"><div class="card-head"><h2>Slate status</h2></div>${Object.keys(KINDS).map(k=>`<div style="padding:6px 0;border-top:1px solid var(--border);font-size:13px">${KINDS[k]}: ${sm[k]&&!sm[k].missing?`draft group ${sm[k].dg}, ${sm[k].n} players, ${sm[k].games} game(s)${sm[k].stale?' (most recent available, new slate not posted yet)':''}`:'not posted yet'}</div>`).join('')}<p style="font-size:12px;color:var(--text-3)">Refresh: a dispatcher runs about every 30 minutes and does a full rebuild overnight, when new DK salaries post, and before each lock. NHL DFS is next.</p></div>`;}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.modal-bg'))history.back()});
 window.addEventListener('hashchange',()=>{if(!document.querySelector('.modal-bg'))route()});
 load();
 })();
