@@ -136,6 +136,14 @@ def usage_summary(games):
         snl = [g["snap"] for g in last if g.get("snap") is not None]; sne = [g["snap"] for g in early if g.get("snap") is not None]
         dsnap = (sum(snl) / len(snl) - sum(sne) / len(sne)) if snl and sne else 0
         s["trend"] = round(opp_l - opp_e, 3); s["dsnap"] = round(dsnap, 3)
+        # two-proportion z-test on target share and carry share (last 2 vs earlier), using raw counts
+        def z(k, cnt):
+            a = sum(g.get(cnt) or 0 for g in last); A = sum((g.get(cnt) or 0) / g[k] for g in last if g.get(k))
+            b = sum(g.get(cnt) or 0 for g in early); B = sum((g.get(cnt) or 0) / g[k] for g in early if g.get(k))
+            if A < 5 or B < 5: return 0.0
+            p1, p2, pp = a / A, b / B, (a + b) / (A + B)
+            se = math.sqrt(max(1e-9, pp * (1 - pp) * (1 / A + 1 / B))); return round((p1 - p2) / se, 2)
+        s["z_ts"] = z("ts", "tgt"); s["z_cs"] = z("cs", "car")
         s["expanding"] = bool((opp_l >= opp_e * 1.35 and opp_l - opp_e >= 0.04) or dsnap >= 0.18)
         s["shrinking"] = bool(opp_l <= opp_e * 0.65 and opp_e >= 0.08)
     return s
@@ -290,3 +298,46 @@ def simulate_game(game, teams, rng):
                 pts = np.maximum(0, base * t["G"] ** 0.5 * t["Tm"] ** 0.5 + rng.normal(0, 3.2, NS))
                 out[p["key"]] = (pts, {})
     return out
+
+
+def dk_row(r):
+    py, ry, recy = fl(r["passing_yards"]), fl(r["rushing_yards"]), fl(r["receiving_yards"])
+    return round(py * .04 + fl(r["passing_tds"]) * 4 - fl(r["passing_interceptions"]) + 3 * (py >= 300) + ry * .1 + fl(r["rushing_tds"]) * 6 + 3 * (ry >= 100)
+                 + fl(r["receptions"]) + recy * .1 + fl(r["receiving_tds"]) * 6 + 3 * (recy >= 100)
+                 - fl(r["rushing_fumbles_lost"]) - fl(r["receiving_fumbles_lost"]) - fl(r["sack_fumbles_lost"]), 2)
+
+def opportunity_spike(p, mates_out, D):
+    """'Their shot': when a role opens up, lean on the player's own elevated-role games (this season, plus last season as evidence)."""
+    g = [x for x in p["games"] if x.get("played")]
+    if not g or not p.get("u"): return None
+    opp = lambda x: x.get("ts", 0) + 0.6 * x.get("cs", 0)
+    med = sorted(opp(x) for x in g)[len(g) // 2]
+    elev = [x for x in g if opp(x) >= max(0.05, 1.25 * med)]
+    ev = []
+    # with/without split vs each OUT teammate: games that teammate missed
+    for o in mates_out:
+        missed = {x["w"] for x in o["games"] if not x.get("played")}
+        wo = [x for x in g if x["w"] in missed]; wi = [x for x in g if x["w"] not in missed]
+        if wo and wi:
+            f = lambda gs, k: sum(x.get(k) or 0 for x in gs) / len(gs)
+            ev.append("Without %s (%d g): %.1f tgt + %.1f car/g vs %.1f + %.1f with" % (o["name"], len(wo), f(wo, "tgt"), f(wo, "car"), f(wi, "tgt"), f(wi, "car")))
+            elev = list({x["w"]: x for x in elev + wo}.values())
+    rows = {int(r["week"]): r for r in D.by_player.get((norm(p["name"]), p["team"]), [])}
+    dk_e = [dk_row(rows[x["w"]]) for x in elev if x["w"] in rows]
+    dk_o = [dk_row(rows[x["w"]]) for x in g if x["w"] in rows and x not in elev]
+    prev = D.prev_by.get(norm(p["name"]), [])
+    pe = [dk_row(r) for r in prev if fl(r["targets"]) + fl(r["carries"]) >= 12]
+    return {"elev": elev, "dk_e": dk_e, "dk_o": dk_o, "prev_e": pe, "ev": ev}
+
+class Filtered:
+    """Data view truncated to weeks < w (for backtesting)."""
+    def __init__(self, D, w):
+        self.season, self.prev_by, self.lg = D.season, D.prev_by, D.lg
+        self.weeks = [x for x in D.weeks if x < w]
+        self.tt = {k: v for k, v in D.tt.items() if k[1] < w}
+        self.team = {k: v for k, v in D.team.items() if k[1] < w}
+        self.snap = {k: v for k, v in D.snap.items() if k[2] < w}
+        self.rz = {k: v for k, v in D.rz.items() if k[1] < w}
+        self.by_player = {k: [r for r in v if int(r["week"]) < w] for k, v in D.by_player.items()}
+    def team_games(self, tm):
+        return sorted({x for (t, x) in self.tt if t == tm})

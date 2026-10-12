@@ -35,3 +35,11 @@ Live: https://mkuritz.github.io/fantasy-frontier/
 
 ## Next
 **NHL DFS is next.** It will reuse NHL Lab projections and goalie context with DraftKings NHL salaries.
+
+## Model v3 (phase 2)
+- **Cross-referenced sources:** usage-model sim (estimate) blended 30/70 with Sleeper/RotoWire projections (external). The table shows how much the sources agree, plus FantasyCalc rank and Sleeper trending adds. Big disagreements are flagged.
+- **News:** ESPN team news plus RotoWire and CBS RSS, matched to players.
+- **Backtest (weeks 3–5):** results in `data/backtest.json`, shown on the How it works page. Sleeper alone has a lower MAE than our model alone. We keep a 30% model weight for game correlation and news/injury cascades, and the UI says so.
+- **"Their shot":** opportunity-spike edge plays. When a player's role expands, we weight his elevated-role history and with/without splits.
+- **Rest of season:** weekly ROS projections (estimate) from neutral baseline × opponent DvP × implied total.
+- **Charts:** salary-budget donut, distribution, this season vs last season, and usage trends with z-tests.

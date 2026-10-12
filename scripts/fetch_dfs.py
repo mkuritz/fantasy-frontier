@@ -337,7 +337,39 @@ def classify(txt):
     t = txt.lower(); u = sum(1 for p in UP if re.search(p, t)); d = sum(1 for p in DOWN if re.search(p, t))
     return (1 if u > d else -1 if d > u else 0)
 
-def build_slate(kind, sl, D, logs, dvp, lgdvp, dst, games, inj, props, td, newsmap):
+def ros(players, sched, week, dvp, lgdvp, games, D):
+    """Rest-of-season weekly DK estimates: neutral per-game baseline x opponent DvP x implied total (closing line if posted,
+    else the team's season scoring pace)."""
+    if not week: return
+    pts = {}
+    for r in sched:
+        if r.get("home_score"):
+            for tm, sc in ((T(r["home_team"]), r["home_score"]), (T(r["away_team"]), r["away_score"])): pts.setdefault(tm, []).append(float(sc))
+    pace = {t: sum(v) / len(v) for t, v in pts.items()}
+    rem = {}
+    for r in sched:
+        w = int(r["week"])
+        if w < week: continue
+        for tm, opp, home in ((T(r["home_team"]), T(r["away_team"]), True), (T(r["away_team"]), T(r["home_team"]), False)):
+            itt = None
+            if r.get("total_line") and r.get("spread_line"):
+                t, s_ = float(r["total_line"]), float(r["spread_line"]); itt = (t + s_) / 2 if home else (t - s_) / 2
+            rem.setdefault(tm, []).append([w, opp, itt or pace.get(tm, 22.0)])
+    for p in players:
+        if not p.get("elig") and not p.get("proj"): continue
+        if p["proj"] <= 0 or p["pos"] == "K": continue
+        g = games.get(p["game"]) or {}
+        itt_now = g.get("itt_home" if g.get("home") == p["team"] else "itt_away") or pace.get(p["team"], 22.0)
+        base = p["proj"] / max(0.8, p.get("mf", 1.0)) / ((itt_now / 22.5) ** 0.5)
+        out = []
+        for w, opp, itt in rem.get(p["team"], []):
+            if w == week: continue
+            dv, lg = dvp.get(opp, {}).get(p["pos"]), lgdvp.get(p["pos"])
+            mf = max(0.9, min(1.12, 1 + 0.4 * (dv / lg - 1))) if dv and lg and p["pos"] != "DST" else 1.0
+            out.append([w, opp, round(base * mf * (itt / 22.5) ** 0.5, 1)])
+        p["ros"] = out; p["ros_total"] = round(sum(x[2] for x in out), 1)
+
+def build_slate(kind, sl, D, logs, dvp, lgdvp, dst, games, inj, props, td, newsmap, ext):
     import numpy as np
     import model as M
     show = sl["ct"] == 96
@@ -381,15 +413,45 @@ def build_slate(kind, sl, D, logs, dvp, lgdvp, dst, games, inj, props, td, newsm
             if p["status"] == "Questionable" and p.get("u"):
                 for k in ("ts", "cs", "rz"): p["u"][k] *= 0.9
                 p["flags"].append("Questionable"); p["edges"].append("Questionable: usage trimmed 10%")
+    import extras as X
+    rssmap = X.match_news(ext["rss"], players)
     # news -> role nudges
     for p in players:
-        items = (newsmap.get((norm(p["name"]), p["team"])) or [])[:3]
+        items = ((newsmap.get((norm(p["name"]), p["team"])) or []) + rssmap.get(p["key"], []))[:4]
         txt = " ".join(i["t"] for i in items) + " " + p.get("inj", "")
         c = classify(txt) if txt.strip() else 0
         if c and p.get("u") and not p["out"]:
             for k in ("ts", "cs", "rz"): p["u"][k] *= (1.07 if c > 0 else 0.92)
             p["edges"].append(("News: role trending up — " if c > 0 else "News: usage risk — ") + ((items[0]["t"] if items else p["inj"])[:150]))
+            if c > 0 and re.search(r"will start|start(ing)? (at|in place)|promoted|take over|lead (back|role)|first start|step into|clear No", txt.lower()): p["spike_news"] = True
         p["news"] = items[:2]
+    # opportunity spike ("their shot")
+    week = ext.get("week"); sp_map, trend = ext.get("sleeper", {}), ext.get("trend", {})
+    for tm, ps in byteam.items():
+        outs = [o for o in ps if o["out"] and o.get("games")]
+        for p in ps:
+            if not p.get("u") or p["out"] or p["pos"] == "QB": continue
+            gain = sum(x for _, _, x in p.get("gain", []))
+            tr = trend.get((norm(p["name"]), tm))
+            same_out = [o for o in outs if o["pos"] == p["pos"]]
+            trig = gain >= 0.04 or p.get("spike_news") or (tr and tr["rank"] <= 25 and same_out)
+            if not trig: continue
+            sp = M.opportunity_spike(p, outs, D)
+            if not sp: continue
+            why = []
+            if sp["dk_e"] and sp["dk_o"] and sum(sp["dk_e"]) / len(sp["dk_e"]) < sum(sp["dk_o"]) / len(sp["dk_o"]): continue  # no evidence he produces more with more role
+            if sp["elev"]:
+                ev = {k: sum(x.get(k) or 0 for x in sp["elev"]) / len(sp["elev"]) for k in ("ts", "cs", "rz", "rzt", "rzr")}
+                for k, v in ev.items():
+                    if v > p["u"].get(k, 0): p["u"][k] = 0.6 * v + 0.4 * p["u"][k]
+            if sp["dk_e"]: why.append("%.1f DK pts/g in his %d expanded-role games this season%s" % (sum(sp["dk_e"]) / len(sp["dk_e"]), len(sp["dk_e"]), (" vs %.1f otherwise" % (sum(sp["dk_o"]) / len(sp["dk_o"]))) if sp["dk_o"] else ""))
+            if len(sp["prev_e"]) >= 2: why.append("%.1f DK pts/g in %d high-volume games last season" % (sum(sp["prev_e"]) / len(sp["prev_e"]), len(sp["prev_e"])))
+            why += sp["ev"][:2]
+            if tr: why.append("Sleeper trending add #%d (%s adds/48h)" % (tr["rank"], format(tr["adds"], ",")))
+            reason = "teammate out" if gain >= 0.04 or same_out else ("depth chart/news" if p.get("spike_news") else "expanding role")
+            p["shot"] = {"reason": reason, "why": why}
+            p["flags"].append("Their shot")
+            p["edges"].insert(0, "Their shot (%s): %s" % (reason, "; ".join(why[:2]) or "role opening up"))
     # matchup, weather, Bet Lab ATD, vs-opponent history
     for p in players:
         g = games.get(p["game"]) or {}
@@ -451,6 +513,31 @@ def build_slate(kind, sl, D, logs, dvp, lgdvp, dst, games, inj, props, td, newsm
             p["_pts"] = pts
         else:
             p.update(proj=0.0, floor=0.0, ceil=0.0, sd=0.0, st={})
+        # cross-reference: Sleeper (RotoWire) projection; backtest-weighted blend (model 30% / consensus 70%)
+        spj = (sp_map.get((norm(p["name"]), p["team"])) or {}).get("pts") if p["pos"] != "DST" else None
+        fc = ext.get("fc", {}).get((norm(p["name"]), p["team"]))
+        p["srcs"] = {"model": p["proj"], "sleeper": spj, "fc_rank": fc and fc["rank"], "trend": (trend.get((norm(p["name"]), p["team"])) or {}).get("rank")}
+        if spj is not None and p["proj"] > 0 and not p["out"]:
+            w = ext.get("model_w", 0.3)
+            if p.get("shot") and p["shot"]["reason"] != "expanding role": w = 0.6  # consensus projections often lag a role change
+            new = w * p["proj"] + (1 - w) * spj
+            r = new / p["proj"] if p["proj"] > 0.5 else 1
+            if "sims" in p: p["sims"] = [round(x * r, 1) for x in p["sims"]]
+            if "_pts" in p: p["_pts"] = p["_pts"] * r
+            p["floor"], p["ceil"] = round(p["floor"] * r, 2), round(p["ceil"] * r, 2); p["proj"] = round(new, 2)
+            d = (p["srcs"]["model"] - spj)
+            p["srcs"]["agree"] = round(100 - min(100, 100 * abs(d) / max(5, (p["srcs"]["model"] + spj) / 2)))
+            if abs(d) >= 4 and abs(d) / max(5, spj) >= 0.3:
+                p["flags"].append("Sources disagree")
+                p["edges"].append("Sources disagree: our usage model %.1f vs Sleeper/RotoWire %.1f" % (p["srcs"]["model"], spj))
+        elif spj and spj >= 6 and not p["out"] and not p.get("backup") and p["proj"] == 0 and p["pos"] != "DST":
+            p["proj"], p["floor"], p["ceil"] = round(spj, 2), round(spj * 0.55, 2), round(spj * 1.6, 2)
+            p["sims"] = [round(max(0, spj * (1 + 0.45 * z)), 1) for z in np.random.default_rng(len(p["key"])).normal(0, 1, M.KEEP)]
+            p["src"] = ["Sleeper/RotoWire projection only (thin sample)"]
+            p["thin"] = True
+        # player history for charts
+        p["hist"] = [[int(r["week"]), M.dk_row(r)] for r in sorted(D.by_player.get((norm(p["name"]), p["team"]), []), key=lambda r: int(r["week"]))]
+        p["hist_prev"] = [[int(r["week"]), M.dk_row(r)] for r in sorted(D.prev_by.get(norm(p["name"]), []), key=lambda r: int(r["week"]))] if p["pos"] != "DST" else []
         gl = logs.get((norm(p["name"]), p["team"])) or []
         p["log"] = [round(g["s"]["dk"], 1) for g in sorted(gl, key=lambda g: g["w"])][-6:]
         p["val"] = round(p["proj"] / (p["sal"] / 1000.0), 2)
@@ -463,10 +550,11 @@ def build_slate(kind, sl, D, logs, dvp, lgdvp, dst, games, inj, props, td, newsm
             if show and (g.get("total") or 0) >= 49: elig, why = False, "Shootout environment (total %.1f): DSTs faded" % g["total"]
         elif p["pos"] == "K": elig, why = show, "" if show else "No K in DK classic"
         elif p.get("backup"): elig, why = False, "Backup QB"
-        elif not u: elig, why = False, "No snaps this season"
+        elif not u: elig, why = (True, "") if p.get("thin") and p["proj"] >= 8 else (False, "No snaps this season")
         else:
             recent_played = any(x.get("played") for x in (p.get("games") or [])[:2])
             role = (u.get("snap") or 0) >= 0.35 or u["ts"] >= 0.10 or u["cs"] >= 0.25 or (p["pos"] == "QB")
+            role = role or bool(p.get("shot"))
             elig = role and (recent_played or u.get("expanding") or bool(p.get("gain"))) and p["proj"] >= (3.0 if show else 5.0)
             why = "" if elig else ("Low role: %d%% snaps, %d%% tgt share, %d%% carry share" % (100 * (u.get("snap") or 0), 100 * u["ts"], 100 * u["cs"]) if not role else "Not active recently / low projection")
         p["elig"], p["why_not"] = elig, why
@@ -475,6 +563,7 @@ def build_slate(kind, sl, D, logs, dvp, lgdvp, dst, games, inj, props, td, newsm
         p["src"] = ["nflverse %d usage (%d g)" % (SEASON, u.get("n", 0))] if u else (["opp implied total, sacks/takeaways"] if p["pos"] == "DST" else [])
         if p.get("atd"): p["src"].append("Bet Lab ATD")
         for k in ("games", "u", "eff", "gain", "dstrate", "kbase", "backup", "tdm"): p.pop(k, None)
+    ros(players, ext.get("sched") or [], ext.get("week"), dvp, lgdvp, games, D)
     own_proxy([p for p in players if p["elig"]], show)
     for p in players:
         if not p["elig"]: p["own"] = 0.0
@@ -514,6 +603,14 @@ def main():
     for sl_ in slates.values():
         for r in sl_["rows"]: teams_all.add(r["TeamAbbrev"])
     newsmap = news(sorted(teams_all))
+    import extras as X
+    sched = X.schedule(SEASON)
+    fcv = X.fantasycalc(); rss = X.rss_news()
+    bt = U.load("backtest.json", {})
+    def ext_for(sl_):
+        day = sl_["start"][:10]; wk = X.week_of(sched, day)
+        spm, tr = X.sleeper(SEASON, wk) if wk else ({}, {})
+        return {"week": wk, "sleeper": spm, "trend": tr, "fc": fcv, "rss": rss, "sched": sched, "model_w": 0.3}
     meta = U.load("meta.json", {})
     meta.update(updated=NOW.isoformat(timespec="minutes"), scoring=SCORE, season=SEASON, slates=meta.get("slates", {}),
                 sources={"salaries": "DraftKings public lobby + salary CSV", "stats": "nflverse weekly player stats %d" % SEASON,
@@ -521,7 +618,7 @@ def main():
                 lgdvp={k: round(v, 2) for k, v in lgdvp.items()}, log_weeks=sorted({int(r["week"]) for r in rows}) if rows else [])
     for kind in ("thu", "sun", "mon"):
         if kind in slates:
-            out = build_slate(kind, slates[kind], D, logs, dvp, lgdvp, dst, games, inj, props, td, newsmap)
+            out = build_slate(kind, slates[kind], D, logs, dvp, lgdvp, dst, games, inj, props, td, newsmap, ext_for(slates[kind]))
             U.save("slate_%s.json" % kind, out)
             meta["slates"][kind] = {"dg": out["dg"], "start": out["start"], "n": len(out["players"]), "games": len(out["games"]), "fetched": out["fetched"], "stale": False}
         else:
@@ -532,6 +629,12 @@ def main():
                 print("kept previous", kind)
             else:
                 meta["slates"][kind] = {"missing": True}
+    try:
+        import backtest as BT
+        r = BT.run(D, sched); r["note"] = BT.__doc__.strip().replace("\n", " "); U.save("backtest.json", r)
+        meta["backtest"] = {k: r.get(k) for k in ("n", "model", "season_avg", "last_game")}
+    except Exception as e: print("backtest failed", e)
+    meta["blend"] = "30% usage-model simulation + 70% Sleeper/RotoWire consensus (weight chosen from the weeks 3-5 backtest)"
     U.save("meta.json", meta)
 
 if __name__ == "__main__":
