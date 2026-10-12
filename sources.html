@@ -30,5 +30,5 @@ fetch('data/xcheck.json?'+Date.now()).then(r=>r.json()).then(d=>{
    el.querySelectorAll('th').forEach(h=>h.onclick=()=>{const k=+h.dataset.k;asc=sk===k?!asc:false;sk=k;draw()})};
   document.querySelector(`[data-f="${i}"]`).oninput=e=>{q=e.target.value.toLowerCase();draw()};draw()});
 }).catch(e=>{document.getElementById('intro').textContent='Cross-check data is not available yet.'});
-</script><div class="sl-credit" style="clear:both;text-align:center;font-size:12px;opacity:.6;padding:18px 12px 22px;line-height:1.5">Fantasy Frontier · A <a href="https://mkuritz.github.io/sports-labs/" style="color:inherit;text-decoration:underline">Sports Labs</a> Product · Property of Michael Kuritz</div>
-</body></html>
+</script><div class="sl-credit" style="clear:both;text-align:center;font-size:12px;opacity:.6;padding:18px 12px 22px;line-height:1.5">Fantasy Frontier · A <a href="https://mkuritz.github.io/sports-labs/" style="color:inherit;text-decoration:underline">Sports Labs</a> Product · Property of Michael Kuritz · <a href="#" data-lead="contact" style="color:inherit;text-decoration:underline">Contact</a> · <a href="#" data-lead="support" style="color:inherit;text-decoration:underline">Support</a></div>
+<script src="https://mkuritz.github.io/sports-labs/js/leads-config.js"></script><script src="https://mkuritz.github.io/sports-labs/js/leads.js" data-product="Fantasy Frontier" data-float="1"></script></body></html>
