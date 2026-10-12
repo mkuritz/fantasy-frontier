@@ -1,0 +1,45 @@
+name: Update DFS slates
+
+# Event-driven: a 30-min dispatcher exits in seconds unless a window is due:
+#  new DraftKings salaries posted, ~2h and ~45m before each lock, overnight (~3 AM ET) and a 4-hourly daytime sweep.
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+    - cron: "17 7 * * *"   # overnight anchors (GitHub throttles frequent schedules)
+    - cron: "47 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-dfs
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dispatch
+        id: d
+        env:
+          FORCE_FULL: ${{ github.event_name == 'workflow_dispatch' }}
+        run: python scripts/dispatch.py
+      - name: Build slates
+        if: steps.d.outputs.mode == 'full'
+        run: python scripts/fetch_dfs.py
+      - name: Commit if data changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898475+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then echo "No data changes"; exit 0; fi
+          git commit -m "Update DFS slates (${{ steps.d.outputs.why || 'state' }}) $(TZ=America/New_York date '+%Y-%m-%d %H:%M %Z')"
+          for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
