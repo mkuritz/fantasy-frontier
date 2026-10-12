@@ -37,7 +37,7 @@ def write(path, title, src, tables, summary):
     names = {t["title"] for t in tables if t["rows"]}
     for t in old.get("tables", []):
         if t["title"] not in names and not any(x["title"] == t["title"] and x["rows"] for x in tables):
-            t["note"] = (t.get("note") or "") + " (kept from previous refresh: source unavailable this run)"
+            t["note"] = (t.get("note") or "").split(" (kept from previous")[0] + " (kept from previous refresh: source unavailable this run)"
             tables = [x for x in tables if x["title"] != t["title"]] + [t]
     json.dump(dict(title=title, generated=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                    sources=src.list, tables=tables, summary=summary), open(path, "w"), separators=(",", ":"))
