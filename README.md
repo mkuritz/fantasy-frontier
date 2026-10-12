@@ -15,6 +15,18 @@ Live: https://mkuritz.github.io/fantasy-frontier/
 | Player prop lines, anytime-TD model | Bet Lab (`mkuritz/bet-lab`) data files | Real lines, modeled TD odds |
 | Projections (mean/floor/ceiling), ownership proxy, edges | `scripts/fetch_dfs.py` | **Estimates** |
 
+
+### Cross-check sources (added Oct 2026; `scripts/ff_xcheck.py` → `data/xcheck.json`, shown on `sources.html`)
+| Source | Used for |
+|---|---|
+| ESPN fantasy projections (public `kona_player_info`, PPR) | Third independent projection next to Sleeper and our model; >30% spread is flagged "disagree" |
+| nflverse Next Gen Stats (receiving / rushing / passing) | Separation, air-yard share, YAC over expected, rush yards over expected, CPOE |
+| nflverse PFR advanced stats | Broken tackles, drops |
+| nflverse depth charts | Flags projected players listed as backups |
+| FTN charting (via nflverse) | Motion / play-action / screen / blitz rates by team's games |
+
+These are cross-checks only: they don't change projections or the optimizer. The step is `continue-on-error`; if a source fails, its table is kept from the previous refresh and marked failed on the page.
+
 `api.draftkings.com/draftgroups/.../draftables` is blocked (403) from datacenter IPs, so the salary CSV export is used instead (same data).
 
 ## Model (v2: usage × efficiency, Monte Carlo)

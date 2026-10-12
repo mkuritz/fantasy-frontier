@@ -37,6 +37,11 @@ jobs:
       - name: Build slates
         if: steps.d.outputs.mode == 'full'
         run: python scripts/fetch_dfs.py
+      - name: Cross-check free sources (optional)
+        if: steps.d.outputs.mode == 'full'
+        continue-on-error: true
+        timeout-minutes: 6
+        run: python scripts/ff_xcheck.py
       - name: Commit if data changed
         run: |
           git config user.name "github-actions[bot]"
