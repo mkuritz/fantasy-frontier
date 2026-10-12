@@ -1,42 +1,21 @@
 {
- "generated": "2026-10-12T17:39:13-04:00",
+ "generated": "2026-10-12T17:59:57-04:00",
  "seasons": {
   "nfl": 2026,
   "mlb": 2026,
   "nhl": 20262027
  },
  "checked": 540,
- "conflicts": [
-  {
-   "src": "slate_sun.json",
-   "sport": "nfl",
-   "player": "Gregory Desrosiers",
-   "team": "LAC",
-   "why": "not on LAC live 2026 roster for 2026-10-12"
-  },
-  {
-   "src": "slate_sun.json",
-   "sport": "nfl",
-   "player": "Nate Carter",
-   "team": "KC",
-   "why": "not on KC live 2026 roster for 2026-10-12"
-  },
-  {
-   "src": "slate_sun.json",
-   "sport": "nfl",
-   "player": "Nick Singleton",
-   "team": "TEN",
-   "why": "not on TEN live 2026 roster for 2026-10-12"
-  },
-  {
-   "src": "slate_sun.json",
-   "sport": "nfl",
-   "player": "Thomas Odukoya",
-   "team": "KC",
-   "why": "not on KC live 2026 roster for 2026-10-12"
-  }
- ],
+ "conflicts": [],
  "unverified": [],
  "stale": [],
- "notes": []
+ "notes": [],
+ "resolved": [
+  {
+   "src": "slate_sun.json",
+   "player": "Thomas Odukoya",
+   "team": "KC",
+   "via": "sleeper live (practice squad/reserve)"
+  }
+ ]
 }
