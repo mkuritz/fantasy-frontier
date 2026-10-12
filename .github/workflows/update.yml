@@ -42,6 +42,9 @@ jobs:
         continue-on-error: true
         timeout-minutes: 6
         run: python scripts/ff_xcheck.py
+      - name: Season guard (current season from date + same-day live roster check)
+        continue-on-error: true
+        run: python scripts/season_guard.py
       - name: Pre-lock lineup snapshot (append-only accountability log)
         continue-on-error: true
         run: |
