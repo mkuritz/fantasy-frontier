@@ -42,3 +42,28 @@ tr.out td{opacity:.45}
 .spark{display:flex;gap:3px;align-items:flex-end;height:40px}.spark i{width:14px;background:var(--accent-2);border-radius:2px 2px 0 0;opacity:.8}
 .busy{opacity:.6;pointer-events:none}
 @media(max-width:960px){.slate-seg button{padding:6px 7px}.slate-seg button .s{display:none}.hide-m{display:none}.lu-row{grid-template-columns:40px 1fr 52px 40px}}
+/* Lineup Builder */
+.bld-wrap{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px}
+.bld-roster{display:flex;flex-direction:column;gap:6px}
+.bld-slot,.bld-opt{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;text-align:left;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:inherit;font:inherit;cursor:pointer;min-height:44px}
+.bld-slot:hover,.bld-opt:hover{border-color:#f59e0b88}
+.bld-slot.on{border-color:#f59e0b;box-shadow:0 0 0 1px #f59e0b inset}
+.bld-slot .n{display:flex;flex-direction:column;min-width:0}
+.bld-opt .pl{display:flex;flex-direction:row;align-items:center;gap:8px;min-width:0;text-align:left}
+.bld-slot .n b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bld-slot .t{font-size:11.5px;color:var(--text-3)}
+.bld-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bld-stats div{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px}
+.bld-stats span{display:block;font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em}
+.bld-stats b{font-size:20px}
+.bld-pick{grid-column:1/-1;margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
+.bld-pick-h{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.bld-list{display:flex;flex-direction:column;gap:4px;max-height:420px;overflow:auto}
+.bld-opt{grid-template-columns:minmax(0,1fr) 56px 44px 46px minmax(0,1.1fr)}
+.bld-opt.over{opacity:.45}.bld-opt.on{border-color:#38bdf8}
+.bld-opt .bt{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.bld-opt .mono{text-align:right}
+@media (max-width:760px){.bld-wrap{grid-template-columns:1fr}.bld-opt{grid-template-columns:minmax(0,1fr) 50px 40px 40px}.bld-opt .bt{grid-column:1/-1;justify-content:flex-start}.bld-stats b{font-size:17px}}
+.bld-list>.bld-opt{flex-shrink:0}
+.bld-opt .pl>span:last-child{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+.bld-opt .pl .pos-tag{flex:0 0 auto}

@@ -616,9 +616,20 @@ def main():
                 sources={"salaries": "DraftKings public lobby + salary CSV", "stats": "nflverse weekly player stats %d" % SEASON,
                          "odds": "ESPN (DraftKings lines)", "injuries": "ESPN", "weather": "Open-Meteo", "props": "Bet Lab (DraftKings props via ESPN)"},
                 lgdvp={k: round(v, 2) for k, v in lgdvp.items()}, log_weeks=sorted({int(r["week"]) for r in rows}) if rows else [])
+    built = {}
+    for kind in ("thu", "sun", "mon"):
+        if kind in slates: built[kind] = build_slate(kind, slates[kind], D, logs, dvp, lgdvp, dst, games, inj, props, td, newsmap, ext_for(slates[kind]))
+    try:  # Film Room: weekly review + learned smash signal (validated leave-one-week-out; only steers value picks if it adds lift)
+        import film as FR
+        fr, fb, _ = FR.run(D, sched, list(built.values()))
+        fr["note"] = FR.__doc__.strip().replace("\n", " "); fr["updated"] = NOW.isoformat(timespec="minutes"); fr["upcoming"] = {}
+        cls = {p["key"]: p["sal"] for o in built.values() if o.get("type") != "showdown" for p in o["players"]}
+        for kind, out in built.items(): fr["upcoming"][kind] = FR.apply(out, fb, D, dvp, lgdvp, fr["validation"]["adds_lift"], cls)
+        U.save("film.json", fr)
+    except Exception as e: print("film room failed", e)
     for kind in ("thu", "sun", "mon"):
         if kind in slates:
-            out = build_slate(kind, slates[kind], D, logs, dvp, lgdvp, dst, games, inj, props, td, newsmap, ext_for(slates[kind]))
+            out = built[kind]
             U.save("slate_%s.json" % kind, out)
             meta["slates"][kind] = {"dg": out["dg"], "start": out["start"], "n": len(out["players"]), "games": len(out["games"]), "fetched": out["fetched"], "stale": False}
         else:

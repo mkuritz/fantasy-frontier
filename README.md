@@ -43,3 +43,8 @@ Live: https://mkuritz.github.io/fantasy-frontier/
 - **"Their shot":** opportunity-spike edge plays. When a player's role expands, we weight his elevated-role history and with/without splits.
 - **Rest of season:** weekly ROS projections (estimate) from neutral baseline × opponent DvP × implied total.
 - **Charts:** salary-budget donut, distribution, this season vs last season, and usage trends with z-tests.
+
+## Lineup Builder, Best of breed, Film Room
+- **Lineup Builder** (on the optimizer page): an interactive DraftKings roster card (classic slots, or CPT + 5 FLEX for showdown). Tap a slot to see ranked eligible players with projection, salary, value and edge tags; the shortlist sorts by projection, value, ceiling or smash. It shows remaining salary, average $ per open slot, the budget donut and the projected total. "Auto-fill the rest" solves the ILP around your picks (a showdown captain stays at CPT). Remove and Clear work on any slot, and you can export to a DK CSV.
+- **Best of breed:** for each position, the top projected players with cost, ceiling, value, and the best-value pick, plus the highest-ceiling and ceiling-per-dollar plays.
+- **Film Room** (`scripts/film.py` → `data/film.json`): for each completed week, the top DK scorers and the biggest value smashes, each explained with data (snap and role change, vacated opportunity, DvP, implied total and game script, red zone, 20+ yard plays, TDs, weather). Past-week salaries are a **proxy** because historical DK salaries aren't freely archived. A logistic "smash likelihood" model is fit on pre-week features and validated leave-one-week-out against a baseline. It changes value picks only if it adds lift, and right now it doesn't. A Tuesday 10:23 UTC cron forces the weekly review after MNF.

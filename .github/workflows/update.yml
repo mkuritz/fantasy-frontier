@@ -7,6 +7,7 @@ on:
     - cron: "7,37 * * * *"
     - cron: "17 7 * * *"   # overnight anchors (GitHub throttles frequent schedules)
     - cron: "47 8 * * *"
+    - cron: "23 10 * * 2"  # Tuesday ~6:23 AM ET: weekly Film Room review after Monday night (nflverse stats post overnight)
   workflow_dispatch:
 
 permissions:
@@ -31,7 +32,7 @@ jobs:
       - name: Dispatch
         id: d
         env:
-          FORCE_FULL: ${{ github.event_name == 'workflow_dispatch' }}
+          FORCE_FULL: ${{ github.event_name == 'workflow_dispatch' || github.event.schedule == '23 10 * * 2' }}
         run: python scripts/dispatch.py
       - name: Build slates
         if: steps.d.outputs.mode == 'full'

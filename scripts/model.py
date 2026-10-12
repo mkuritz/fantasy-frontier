@@ -39,12 +39,15 @@ class Data:
         pbp = csv_rows("pbp/play_by_play_%d.csv.gz" % season, gz=True)
         self.weeks = sorted({int(r["week"]) for r in self.wk})
         # red-zone opportunities per player-week, team rz plays, team pass/rush plays
-        self.rz, self.team = {}, {}
+        self.rz, self.team, self.big = {}, {}, {}
         for r in pbp:
             if r.get("play_type") not in ("pass", "run") or not r.get("posteam"): continue
             w, tm = int(r["week"]), T(r["posteam"])
             t = self.team.setdefault((tm, w), {"pa": 0, "ru": 0, "rz": 0, "rzp": 0, "rzr": 0, "opp": T(r.get("defteam") or "")})
             rz = (fl(r.get("yardline_100")) or 99) <= 20
+            if fl(r.get("yards_gained")) >= 20:
+                pid_ = r.get("receiver_player_id") if r["play_type"] == "pass" else r.get("rusher_player_id")
+                if pid_: self.big[(pid_, w)] = self.big.get((pid_, w), 0) + 1
             if r["play_type"] == "pass": t["pa"] += 1
             else: t["ru"] += 1
             if rz:
