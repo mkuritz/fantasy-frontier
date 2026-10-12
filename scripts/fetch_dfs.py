@@ -230,7 +230,8 @@ def project_player(pl, gl, ctx):
     if n and pos in ("QB", "RB", "WR", "TE"):
         prior = pl["sal"] / 1000.0 * (2.75 if pos == "QB" else 2.45)  # salary-implied prior (DK prices encode role)
         k = 2.5 if not used else 1.5
-        mean = (n * mean + k * prior) / (n + k)
+        if mean >= 0.45 * prior:  # only regress real roles; backups keep their own (low) numbers
+            mean = (n * mean + k * prior) / (n + k)
     if not n and not used:
         mean = f(pl.get("avg")) * 0.9 * (0.6 + 0.4 * vegas); src = ["DK season avg (no logs)"]
     if used: src.append("Bet Lab props: " + ", ".join(used))

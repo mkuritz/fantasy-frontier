@@ -62,7 +62,7 @@ function openPlayer(id){const p=pool().find(x=>x.id===id);if(!p)return;const mx=
   <div class="grid kpis" style="margin-top:12px;grid-template-columns:repeat(4,1fr)"><div><div class="kpi-label">Salary</div><b class="mono">${fmt$(p.sal)}</b>${p.csal?`<div class="t" style="font-size:11px;color:var(--text-3)">CPT ${fmt$(p.csal)}</div>`:''}</div><div><div class="kpi-label">Proj<span class="est">est</span></div><b class="mono">${f1(p.proj)}</b></div><div><div class="kpi-label">Floor / Ceil</div><b class="mono">${f1(p.floor)} / ${f1(p.ceil)}</b></div><div><div class="kpi-label">Own proxy</div><b class="mono">${f1(p.own)}%</b></div></div>
   ${statl?`<p style="color:var(--text-2);font-size:13px;margin:12px 0 4px">Projected line: ${esc(statl)}</p>`:''}
   <h4 style="margin:12px 0 4px">Why he could outperform</h4>${(p.edges||[]).length?`<ul class="edge-list">${p.edges.map(e=>`<li>${esc(e)}</li>`).join('')}</ul>`:'<p style="color:var(--text-3);font-size:13px">No notable edge flags. Projection is driven by recent production.</p>'}
-  ${p.inj?`<p class="note warn" style="margin-top:10px">${esc(p.inj)}</p>`:''}
+  ${p.inj&&p.status&&p.status!=='Active'?`<p class="note warn" style="margin-top:10px">${esc(p.inj)}</p>`:''}
   ${(p.log||[]).length?`<h4 style="margin:12px 0 6px">Recent DK points</h4><div class="spark">${p.log.map(v=>`<i title="${v}" style="height:${Math.max(3,40*v/mx)}px"></i>`).join('')}</div><div class="mono" style="font-size:11px;color:var(--text-3)">${p.log.join(' · ')}</div>`:''}
   <p style="font-size:11.5px;color:var(--text-3);margin-top:12px">Inputs: ${esc((p.src||[]).join(' · '))}. Matchup factor ×${p.mf??'–'}, Vegas factor ×${p.vegas??'–'}.</p>
   <div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm" id="mlk">${locks()[p.id]?'Unlock':'Lock in optimizer'}</button><button class="btn sm danger" id="mex">${excls()[p.id]?'Include':'Exclude'}</button></div></div>`;
@@ -98,12 +98,12 @@ function solveOne(players,cfg,prev,expCount,n){const sd=isSD();const L=locks();c
     if(cfg.stack>0)for(const q of qbs){C['st'+q.id]={min:0};if(cfg.bring)C['bb'+q.id]={min:0};}
     prev.forEach((lu,i)=>C['pv'+i]={max:9-cfg.uniq});
   }else{const teams=[...new Set(players.map(p=>p.team))];Object.assign(C,{CPT:{equal:1},FLEX:{equal:5}});C.sal.min=Math.min(cfg.minsal,49999);
-    teams.forEach(t=>C['tm'+t]={min:1});
-    const sc=cfg.script||'any';
+    const sc=cfg.script||'any';teams.forEach(t=>C['tm'+t]={min:sc==='shootout'?2:1});
+    const topQB=new Set(teams.map(t=>(players.filter(p=>p.team===t&&p.pos==='QB').sort((a,b)=>b.proj-a.proj)[0]||{}).id));
     for(const p of players){if(banned(p))continue;const b=score(p,cfg,rnd);
       for(const slot of ['CPT','FLEX']){if(slot==='CPT'&&!p.cid)continue;const vid=slot+p.id;const v={score:slot==='CPT'?1.5*b:b,sal:slot==='CPT'?p.csal:p.sal,[slot]:1,['u'+p.id]:1,['tm'+p.team]:1};
         if(sc.startsWith('team:')&&p.team===sc.slice(5)){v.TS=1;if(slot==='CPT')v.TC=1;}
-        if(sc==='shootout'&&p.pos==='QB')v.QBS=1;
+        if(sc==='shootout'&&topQB.has(p.id))v.QBS=1;
         if(sc==='shootout'&&slot==='CPT'&&'QB WR TE'.includes(p.pos))v.SC=1;
         prev.forEach((lu,i)=>{if(lu.includes(vid))v['pv'+i]=1});
         model.variables[vid]=v;model.ints[vid]=1;C[vid+'_b']={max:1};v[vid+'_b']=1;}
@@ -120,8 +120,11 @@ function buildLineup(ids){const P=pool();const byId=Object.fromEntries(P.map(p=>
   const rows=[];take('QB',1).forEach(p=>rows.push({slot:'QB',p}));take('RB',2).forEach(p=>rows.push({slot:'RB',p}));take('WR',3).forEach(p=>rows.push({slot:'WR',p}));take('TE',1).forEach(p=>rows.push({slot:'TE',p}));
   ps.filter(p=>!p._u&&p.pos!=='DST').forEach(p=>{p._u=1;rows.push({slot:'FLEX',p})});take('DST',1).forEach(p=>rows.push({slot:'DST',p}));ps.forEach(p=>delete p._u);
   rows.forEach(r=>Object.assign(r,{sal:r.p.sal,pts:r.p.proj,fl:r.p.floor,cl:r.p.ceil,own:r.p.own,dkid:r.p.id}));return finish(rows,ids);}
-function finish(rows,ids){const sum=k=>rows.reduce((a,r)=>a+(r[k]||0),0);return {rows,ids,sal:sum('sal'),proj:sum('pts'),floor:sum('fl'),ceil:sum('cl'),own:sum('own')};}
-function optimize(cfg,n){const players=prune(pool(),cfg,isSD());const prev=[],out=[],exp={};
+function finish(rows,ids){const sum=k=>rows.reduce((a,r)=>a+(r[k]||0),0);const proj=sum('pts');
+  // lineup range: player outcomes combined (sqrt of summed variances, +20% for in-game correlation), not a sum of individual floors/ceilings
+  const sd=Math.sqrt(rows.reduce((a,r)=>{const m=r.slot==='CPT'?1.5:1;const s=(r.p.sd||((r.p.ceil-r.p.floor)/2.1))*m;return a+s*s},0))*1.2;
+  return {rows,ids,sal:sum('sal'),proj,floor:Math.max(0,proj-0.84*sd),ceil:proj+1.28*sd,own:sum('own')};}
+function optimize(cfg,n,prev0){const players=prune(pool(),cfg,isSD());const prev=prev0||[],out=[],exp={};
   for(let i=0;i<n;i++){const ids=solveOne(players,cfg,prev,exp,n);if(!ids)break;prev.push(ids);const lu=buildLineup(ids);out.push(lu);lu.rows.forEach(r=>exp[r.p.id]=(exp[r.p.id]||0)+1);}
   return out;}
 function why(lu,kind){const r=lu.rows;const qb=r.find(x=>x.p.pos==='QB'&&x.slot!=='CPT')||r.find(x=>x.p.pos==='QB');const out=[];
@@ -132,13 +135,14 @@ function why(lu,kind){const r=lu.rows;const qb=r.find(x=>x.p.pos==='QB'&&x.slot!
   const vals=r.filter(x=>x.p.sal<=5000&&x.p.pos!=='DST').sort((a,b)=>b.p.val-a.p.val).slice(0,2);if(vals.length)out.push('Salary savers: '+vals.map(x=>`${x.p.name} (${fmt$(x.p.sal)}, ${x.p.val} pts/$1k)`).join(', '));
   return out;}
 function luCard(lu,cls,title,sub,kind){return `<div class="lu ${cls}"><h3>${esc(title)}</h3><div class="sub">${esc(sub)}</div>${lu.rows.map(r=>`<div class="lu-row" data-pid="${r.p.id}" style="cursor:pointer"><span>${posTag(r.slot==='CPT'?'CPT':r.slot)}</span><span class="n"><b>${esc(r.p.name)}</b> <span style="color:var(--text-3);font-size:11.5px">${esc(r.p.team)} ${r.slot!==r.p.pos&&r.slot!=='DST'?esc(r.p.pos):''}</span></span><span class="mono" style="text-align:right">${fmt$(r.sal)}</span><span class="mono" style="text-align:right">${f1(r.pts)}</span></div>`).join('')}
-  <div class="lu-foot"><span>Salary <b class="mono">${fmt$(lu.sal)}</b> / $50k</span><span>Proj <b class="mono">${f1(lu.proj)}</b></span><span>Floor–Ceil <b class="mono">${f1(lu.floor)}–${f1(lu.ceil)}</b></span><span>Own proxy <b class="mono">${Math.round(lu.own)}%</b></span></div>
+  <div class="lu-foot"><span>Salary <b class="mono">${fmt$(lu.sal)}</b> / $50k</span><span>Proj <b class="mono">${f1(lu.proj)}</b></span><span>Floor–Ceil <b class="mono">${f1(lu.floor)}–${f1(lu.ceil)}</b></span><span>Total own* <b class="mono">${Math.round(lu.own)}%</b></span></div>
   <ul class="edge-list">${why(lu,kind).map(w=>`<li>${esc(w)}</li>`).join('')}</ul></div>`;}
 function recs(){const k=lockK();if(S.rec[k])return S.rec[k];const sd=isSD();
   const base={n:1,exp:100,uniq:1,minsal:sd?46000:48500,script:'any'};
-  const safe=optimize(Object.assign({},base,{contest:'cash',fee:50,stack:sd?0:0,bring:0}),1)[0];
-  const bal=optimize(Object.assign({},base,{contest:'bal',fee:20,stack:sd?0:1,bring:0}),1)[0];
-  const up=optimize(Object.assign({},base,{contest:'gpp',fee:10,stack:sd?0:2,bring:1,script:sd?'shootout':'any'}),1)[0];
+  const prev=[];const U=sd?2:3;
+  const safe=optimize(Object.assign({},base,{contest:'cash',fee:50,stack:0,bring:0,uniq:U}),1,prev)[0];
+  const bal=optimize(Object.assign({},base,{contest:'bal',fee:20,stack:sd?0:1,bring:0,uniq:U}),1,prev)[0];
+  const up=optimize(Object.assign({},base,{contest:'gpp',fee:10,stack:sd?0:2,bring:1,script:sd?'shootout':'any',uniq:U}),1,prev)[0]||optimize(Object.assign({},base,{contest:'gpp',fee:10,stack:sd?0:2,bring:1,uniq:1}),1)[0];
   return S.rec[k]={safe,bal,up};}
 function recBlock(){const r=recs();const sd=isSD();if(!r.safe)return '<p>Not enough projected players to build lineups.</p>';
   return `<div class="lu-grid">${r.safe?luCard(r.safe,'safe','Safe · Cash / 50-50',sd?'Highest floor, CPT on the steadiest volume':'Built on floor: steady volume, no forced stacks','cash'):''}${r.bal?luCard(r.bal,'bal','Balanced · Single-entry',sd?'Best median outcome':'Median-optimal with a QB + 1 stack','bal'):''}${r.up?luCard(r.up,'up','Upside · GPP',sd?'Same-game-parlay logic: shootout script, pass-game CPT, ceiling over chalk':'QB + 2 stack with bring-back, ceiling and leverage over chalk','gpp'):''}</div>`;}

@@ -20,7 +20,7 @@
 .lu h3{margin:0 0 2px;font-size:15px}.lu .sub{color:var(--text-3);font-size:12px;margin-bottom:10px}
 .lu-row{display:grid;grid-template-columns:44px 1fr 58px 46px;gap:6px;align-items:center;padding:5px 0;border-top:1px solid var(--border);font-size:13px}
 .lu-row .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lu-foot{display:flex;justify-content:space-between;margin-top:8px;font-size:12.5px;color:var(--text-2);flex-wrap:wrap;gap:6px}
+.lu-foot{display:grid;grid-template-columns:1fr 1fr;margin-top:8px;font-size:12.5px;color:var(--text-2);flex-wrap:wrap;gap:6px}
 .lu.safe{border-top:3px solid var(--pos)}.lu.bal{border-top:3px solid var(--accent-2)}.lu.up{border-top:3px solid var(--accent)}
 .ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:12px}
 .ctl label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-3)}
