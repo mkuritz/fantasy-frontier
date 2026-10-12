@@ -140,8 +140,8 @@ def injuries():
         for i in t.get("injuries", []):
             a = i.get("athlete") or {}
             tm = T(((a.get("team") or {}).get("abbreviation")) or "")
-            out[(norm(a.get("displayName", "")), tm)] = {"status": i.get("status"), "note": i.get("shortComment")}
-            out[(norm(a.get("displayName", "")), "*")] = {"status": i.get("status"), "note": i.get("shortComment")}
+            v = {"status": i.get("status"), "note": (i.get("shortComment") or "") + " " + (i.get("longComment") or "")}
+            out[(norm(a.get("displayName", "")), tm)] = v; out[(norm(a.get("displayName", "")), "*")] = v
     return out
 
 def betlab():
@@ -312,7 +312,34 @@ def own_proxy(players, showdown):
         s = sum(w for _, w in arr) or 1
         for p, w in arr: p["own"] = round(min(cap, tot_slot.get(k, 100) * w / s), 1)
 
-def build_slate(kind, sl, logs, dvp, lgdvp, dst, games, inj, props, td):
+
+# ---------------- news (ESPN team news + injury blurbs) ----------------
+UP = [r"expected to play", r"full participant", r"no limitations", r"(increased|bigger|expanded|larger) role", r"more (snaps|touches|work|targets)",
+      r"(lead|top|starting|No\. ?1|clear No\. 2) (back|role|option|receiver|tight end|running back|job)", r"promoted", r"will start", r"take over", r"step into", r"figures to (operate|see|handle|lead)", r"cleared"]
+DOWN = [r"limited (practice|participant|snaps)", r"snap count", r"(reduced|smaller|limited) role", r"demoted", r"benched", r"split (work|carries|reps)",
+        r"committee", r"game-time decision", r"pitch count", r"workload (will be )?managed", r"not expected to"]
+def news(teams_abbr):
+    tl = U.get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams") or {}
+    ids = {T(t["team"]["abbreviation"]): t["team"]["id"] for t in tl.get("sports", [{}])[0].get("leagues", [{}])[0].get("teams", [])}
+    out = {}
+    cut = (NOW - dt.timedelta(days=6)).isoformat()
+    for tm in teams_abbr:
+        if tm not in ids: continue
+        d = U.get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/news?limit=25&team=" + ids[tm]) or {}
+        for a in d.get("articles", []):
+            if (a.get("published") or "") < cut[:19]: continue
+            txt = (a.get("headline") or "") + ". " + (a.get("description") or "")
+            for c in a.get("categories", []):
+                if c.get("type") == "athlete" and c.get("description"):
+                    out.setdefault((norm(c["description"]), tm), []).append({"t": txt[:220], "d": a.get("published", "")[:10]})
+    return out
+def classify(txt):
+    t = txt.lower(); u = sum(1 for p in UP if re.search(p, t)); d = sum(1 for p in DOWN if re.search(p, t))
+    return (1 if u > d else -1 if d > u else 0)
+
+def build_slate(kind, sl, D, logs, dvp, lgdvp, dst, games, inj, props, td, newsmap):
+    import numpy as np
+    import model as M
     show = sl["ct"] == 96
     raw = {}
     for r in sl["rows"]:
@@ -320,39 +347,154 @@ def build_slate(kind, sl, logs, dvp, lgdvp, dst, games, inj, props, td):
         key = norm(name) + "|" + tm
         gi = r["Game Info"].split(" ")[0]
         a, h = (gi.split("@") + [""])[:2]
-        p = raw.setdefault(key, {"key": key, "name": name, "team": tm, "pos": r["Position"], "opp": h if tm == a else a, "game": gi,
-                                 "avg": f(r["AvgPointsPerGame"]), "dkstatus": r.get("Status") or ""})
+        p = raw.setdefault(key, {"key": key, "name": name, "team": tm, "pos": r["Position"], "opp": h if tm == a else a, "game": gi, "avg": f(r["AvgPointsPerGame"])})
         if show:
             if r["Roster Position"] == "CPT": p["cid"], p["csal"] = r["ID"], int(r["Salary"])
             else: p["id"], p["sal"] = r["ID"], int(r["Salary"])
-        else: p["id"], p["sal"], p["rp"] = r["ID"], int(r["Salary"]), r["Roster Position"]
+        else: p["id"], p["sal"] = r["ID"], int(r["Salary"])
     players = [p for p in raw.values() if p.get("sal")]
+    missing = [p["name"] for p in raw.values() if not p.get("sal")]
+    if missing: print("WARN no FLEX row for", missing[:5])
     for p in players:
         ij = inj.get((norm(p["name"]), p["team"])) or ({} if p["pos"] == "DST" else inj.get((norm(p["name"]), "*"))) or {}
-        p["status"] = ij.get("status") or p["dkstatus"] or ""
-        if ij.get("note"): p["inj"] = ij["note"][:220]
-    cas, notes = cascades(players, logs, inj)
+        p["status"] = ij.get("status") or ""
+        p["inj"] = (ij.get("note") or "")[:240]
+        p["out"] = p["status"] in OUT_STATUSES
+        p["edges"], p["flags"] = [], []
+    byteam = {}
+    for p in players: byteam.setdefault(p["team"], []).append(p)
+    notes = []
+    for tm, ps in byteam.items():
+        for p in ps:
+            if p["pos"] in ("QB", "RB", "WR", "TE"):
+                p["games"] = M.player_usage(D, p["name"], tm)
+                p["u"] = M.usage_summary(p["games"])
+                p["eff"] = M.eff(p["games"], p["pos"], D.lg)
+        qbs = [p for p in ps if p["pos"] == "QB" and p.get("u") and not p["out"]]
+        starter = max(qbs, key=lambda q: M.wavg(q["games"][:2], "att"), default=None)
+        for q in ps:
+            if q["pos"] == "QB" and q is not starter: q["u"] = None; q["backup"] = True
+        if starter: starter["u"]["ts"] = 0.0
+        outs = [p for p in ps if p["out"] and p.get("u")]
+        notes += M.redistribute([p for p in ps if p.get("u")], outs)
+        for p in ps:
+            if p["status"] == "Questionable" and p.get("u"):
+                for k in ("ts", "cs", "rz"): p["u"][k] *= 0.9
+                p["flags"].append("Questionable"); p["edges"].append("Questionable: usage trimmed 10%")
+    # news -> role nudges
+    for p in players:
+        items = (newsmap.get((norm(p["name"]), p["team"])) or [])[:3]
+        txt = " ".join(i["t"] for i in items) + " " + p.get("inj", "")
+        c = classify(txt) if txt.strip() else 0
+        if c and p.get("u") and not p["out"]:
+            for k in ("ts", "cs", "rz"): p["u"][k] *= (1.07 if c > 0 else 0.92)
+            p["edges"].append(("News: role trending up — " if c > 0 else "News: usage risk — ") + ((items[0]["t"] if items else p["inj"])[:150]))
+        p["news"] = items[:2]
+    # matchup, weather, Bet Lab ATD, vs-opponent history
     for p in players:
         g = games.get(p["game"]) or {}
-        ctx = {"game": g, "dvp": dvp, "lgdvp": lgdvp, "dst": dst, "props": props, "td": td, "cascade": cas}
-        gl = logs.get((norm(p["name"]), p["team"])) or logs.get((norm(p["name"]), "*")) or []
-        if p["pos"] == "DST": pr = project_dst(p, ctx)
-        elif p["pos"] == "K": pr = project_k(p, gl, ctx)
-        else: pr = project_player(p, gl, ctx)
-        p.update(pr)
-        if p["status"] in OUT_STATUSES: p.update(proj=0, floor=0, ceil=0); p["edges"] = ["Ruled %s" % p["status"]]
-        elif p["status"] == "Questionable":
-            for k in ("proj", "floor", "ceil"): p[k] = round(p[k] * 0.88, 2)
-            p["edges"] = p["edges"] + ["Questionable: projection trimmed 12%"]
+        dv = dvp.get(p["opp"], {}).get(p["pos"]); lg = lgdvp.get(p["pos"])
+        p["mf"] = round(max(0.9, min(1.12, 1 + 0.4 * (dv / lg - 1))) if dv and lg else 1.0, 3)
+        if dv and lg and dv / lg >= 1.15: p["edges"].append("%s allows %.1f DK pts/g to %ss this season (+%d%% vs avg)" % (p["opp"], dv, p["pos"], round(100 * (dv / lg - 1))))
+        if dv and lg and dv / lg <= 0.85: p["edges"].append("Tough matchup: %s allows %.1f DK pts/g to %ss" % (p["opp"], dv, p["pos"]))
+        wx = g.get("wx") or {}
+        if p.get("eff") and (wx.get("wind") or 0) > 15 and p["pos"] in ("QB", "WR", "TE"):
+            p["eff"]["ypr"] *= 0.93; p["eff"]["cr"] *= 0.97; p["edges"].append("Wind %d mph: passing downgrade" % wx["wind"])
+        t = td.get((norm(p["name"]), p["team"], p["opp"]))
+        if t and t.get("prob"): p["atd"] = t["prob"]; p["edges"].append("Bet Lab anytime TD: %d%%" % round(100 * t["prob"]))
+        prev = [r for r in D.prev_by.get(norm(p["name"]), []) + D.by_player.get((norm(p["name"]), p["team"]), []) if T(r["opponent_team"]) == p["opp"]]
+        if len(prev) >= 2 and p["pos"] != "DST":
+            avg = sum(f(r["fantasy_points_ppr"]) for r in prev) / len(prev)
+            p["vs_opp"] = [len(prev), round(avg, 1)]
+            if p.get("avg") and avg >= 1.3 * p["avg"] and avg >= 12:
+                p["edges"].append("Owns %s: %.1f PPR pts/g in %d meetings" % (p["opp"], avg, len(prev))); p["tdm"] = 1.04
+        u = p.get("u")
+        if u:
+            if u.get("expanding"): p["flags"].append("Expanding role"); p["edges"].insert(0, "Expanding role: opportunity share %+.0f pts, snaps %+.0f pts over the last 2 games" % (100 * u["trend"], 100 * (u.get("dsnap") or 0)))
+            if u.get("shrinking"): p["flags"].append("Shrinking role")
+        for nm, lab, x in p.get("gain", []):
+            p["edges"].append("%s out: +%.1f%% %s share vacated to him" % (nm, 100 * x, "target" if lab == "targets" else "carry"))
+    # DST / K inputs
+    for p in players:
+        if p["pos"] == "DST":
+            d = dst.get(p["team"], {}); p["dstrate"] = {"sk": d.get("sk", 2.4), "to": d.get("int", .7) + d.get("fr", .5), "td": d.get("td", .1)}
+        if p["pos"] == "K":
+            gl = (logs.get((norm(p["name"]), p["team"])) or [])[-6:]
+            p["kbase"] = (sum(g["s"]["fg"] * 3 + g["s"]["fg40"] + 2 * g["s"]["fg50"] + g["s"]["pat"] for g in gl) / len(gl)) if gl else 7.0
+    # simulate each game
+    rng = np.random.default_rng(abs(hash(sl["dg"])) % 2**32)
+    keep_idx = np.arange(M.KEEP)
+    sims = {}
+    for gk in sorted({p["game"] for p in players}):
+        g = games.get(gk) or {}
+        a, h = gk.split("@")
+        teams = {}
+        for tm in (a, h):
+            home = tm == h
+            itt = g.get("itt_home" if home else "itt_away") or 22.0
+            sp = g.get("spread"); sp = (sp if home else -sp) if sp is not None else 0.0  # + = underdog
+            tot = g.get("total") or 44.5
+            v = M.team_volume(D, tm)
+            v["tgt_proj"] = v["tgt"] * (tot / 44.5) ** 0.45 * (1 + 0.011 * sp)
+            v["car_proj"] = v["car"] * (tot / 44.5) ** 0.35 * (1 - 0.016 * sp)
+            ps = [p for p in byteam.get(tm, []) if not p["out"] and (p.get("u") or p["pos"] in ("DST", "K"))]
+            teams[tm] = {"vol": v, "itt": itt, "players": ps}
+        res = M.simulate_game(g, teams, rng)
+        for k, (pts, st_) in res.items():
+            sims[k] = (pts, st_)
+    for p in players:
+        if p["key"] in sims:
+            pts, st_ = sims[p["key"]]
+            p["proj"] = round(float(pts.mean()), 2); p["floor"] = round(float(np.percentile(pts, 20)), 2); p["ceil"] = round(float(np.percentile(pts, 90)), 2)
+            p["sd"] = round(float(pts.std()), 2); p["st"] = {k: round(float(v), 2) for k, v in st_.items()}
+            p["sims"] = [round(float(x), 1) for x in pts[keep_idx]]
+            p["_pts"] = pts
+        else:
+            p.update(proj=0.0, floor=0.0, ceil=0.0, sd=0.0, st={})
+        gl = logs.get((norm(p["name"]), p["team"])) or []
+        p["log"] = [round(g["s"]["dk"], 1) for g in sorted(gl, key=lambda g: g["w"])][-6:]
         p["val"] = round(p["proj"] / (p["sal"] / 1000.0), 2)
-        p.pop("dkstatus", None); p.pop("avg_", None)
-    own_proxy(players, show)
-    gl = sorted({p["game"] for p in players})
-    gm = [dict(games.get(k) or {"away": k.split("@")[0], "home": (k.split("@") + [""])[1]}, key=k) for k in gl]
-    players.sort(key=lambda p: -p["proj"])
-    start = sl["start"]
-    return {"kind": kind, "type": "showdown" if show else "classic", "dg": sl["dg"], "start": start, "label": sl.get("label"),
-            "games": gm, "players": players, "cascades": notes, "fetched": NOW.isoformat(timespec="minutes"), "stale": False}
+        # eligibility: real role only (no cheap-but-useless plays)
+        u = p.get("u") or {}
+        g = games.get(p["game"]) or {}
+        if p["out"]: elig, why = False, "Ruled " + p["status"]
+        elif p["pos"] == "DST": 
+            elig, why = True, ""
+            if show and (g.get("total") or 0) >= 49: elig, why = False, "Shootout environment (total %.1f): DSTs faded" % g["total"]
+        elif p["pos"] == "K": elig, why = show, "" if show else "No K in DK classic"
+        elif p.get("backup"): elig, why = False, "Backup QB"
+        elif not u: elig, why = False, "No snaps this season"
+        else:
+            recent_played = any(x.get("played") for x in (p.get("games") or [])[:2])
+            role = (u.get("snap") or 0) >= 0.35 or u["ts"] >= 0.10 or u["cs"] >= 0.25 or (p["pos"] == "QB")
+            elig = role and (recent_played or u.get("expanding") or bool(p.get("gain"))) and p["proj"] >= (3.0 if show else 5.0)
+            why = "" if elig else ("Low role: %d%% snaps, %d%% tgt share, %d%% carry share" % (100 * (u.get("snap") or 0), 100 * u["ts"], 100 * u["cs"]) if not role else "Not active recently / low projection")
+        p["elig"], p["why_not"] = elig, why
+        if p.get("u"):
+            uu = p["u"]; p["usage"] = {k: uu.get(k) for k in ("snap", "ts", "cs", "rz", "trend", "dsnap", "expanding", "weeks", "n")}
+        p["src"] = ["nflverse %d usage (%d g)" % (SEASON, u.get("n", 0))] if u else (["opp implied total, sacks/takeaways"] if p["pos"] == "DST" else [])
+        if p.get("atd"): p["src"].append("Bet Lab ATD")
+        for k in ("games", "u", "eff", "gain", "dstrate", "kbase", "backup", "tdm"): p.pop(k, None)
+    own_proxy([p for p in players if p["elig"]], show)
+    for p in players:
+        if not p["elig"]: p["own"] = 0.0
+    # captain rankings (showdown): 1.5x points; share of sims where he is the slate's top scorer
+    cpt = []
+    if show:
+        el = [p for p in players if p["elig"] and "_pts" in p and p.get("csal")]
+        if el:
+            mat = np.vstack([p["_pts"] for p in el]); top = mat.argmax(axis=0)
+            for i, p in enumerate(el):
+                c = 1.5 * p["_pts"]
+                cpt.append({"id": p["id"], "name": p["name"], "pos": p["pos"], "team": p["team"], "csal": p["csal"], "proj": round(float(c.mean()), 1),
+                            "ceil": round(float(np.percentile(c, 90)), 1), "top": round(float((top == i).mean()) * 100, 1),
+                            "val": round(float(c.mean()) / (p["csal"] / 1000), 2)})
+            cpt.sort(key=lambda x: -(x["proj"] + 0.35 * (x["ceil"] - x["proj"]) + 0.15 * x["top"]))
+    for p in players: p.pop("_pts", None)
+    gm = [dict(games.get(k) or {"away": k.split("@")[0], "home": (k.split("@") + [""])[1]}, key=k) for k in sorted({p["game"] for p in players})]
+    players.sort(key=lambda p: (not p["elig"], -p["proj"]))
+    return {"kind": kind, "type": "showdown" if show else "classic", "dg": sl["dg"], "start": sl["start"], "label": sl.get("label"), "nsims": M.NS, "keep": M.KEEP,
+            "games": gm, "players": players, "cascades": notes, "cpt": cpt[:12], "fetched": NOW.isoformat(timespec="minutes"), "stale": False}
 
 def main():
     os.makedirs(U.DATA, exist_ok=True)
@@ -366,6 +508,12 @@ def main():
             if m: days.add("%s-%s-%s" % (m.group(3), m.group(1), m.group(2)))
     games = espn_games(days)
     inj = injuries(); props, td, an = betlab()
+    import model as M
+    D = M.Data(SEASON)
+    teams_all = set()
+    for sl_ in slates.values():
+        for r in sl_["rows"]: teams_all.add(r["TeamAbbrev"])
+    newsmap = news(sorted(teams_all))
     meta = U.load("meta.json", {})
     meta.update(updated=NOW.isoformat(timespec="minutes"), scoring=SCORE, season=SEASON, slates=meta.get("slates", {}),
                 sources={"salaries": "DraftKings public lobby + salary CSV", "stats": "nflverse weekly player stats %d" % SEASON,
@@ -373,7 +521,7 @@ def main():
                 lgdvp={k: round(v, 2) for k, v in lgdvp.items()}, log_weeks=sorted({int(r["week"]) for r in rows}) if rows else [])
     for kind in ("thu", "sun", "mon"):
         if kind in slates:
-            out = build_slate(kind, slates[kind], logs, dvp, lgdvp, dst, games, inj, props, td)
+            out = build_slate(kind, slates[kind], D, logs, dvp, lgdvp, dst, games, inj, props, td, newsmap)
             U.save("slate_%s.json" % kind, out)
             meta["slates"][kind] = {"dg": out["dg"], "start": out["start"], "n": len(out["players"]), "games": len(out["games"]), "fetched": out["fetched"], "stale": False}
         else:

@@ -17,8 +17,15 @@ Live: https://mkuritz.github.io/fantasy-frontier/
 
 `api.draftkings.com/draftgroups/.../draftables` is blocked (403) from datacenter IPs, so the salary CSV export is used instead (same data).
 
-## Model
-Stat-by-stat DK points: recency-weighted logs, blended with prop-line medians when posted. Scaled by Vegas implied total, defense vs position (shrunk 50%) and weather. Injury cascades push vacated targets and carries to healthy teammates. TDs and totals are regressed toward opportunity and salary-implied priors. Floor and ceiling are the 20th and 90th percentiles. DST uses the opponent's implied total on DK's points-allowed tiers, plus sack and takeaway rates.
+## Model (v2: usage × efficiency, Monte Carlo)
+- **This season only, recency-weighted:** snap % (nflverse snap counts), target share, carry share, and red-zone target and carry share (nflverse play-by-play). The last game weighs 32%, then 24%, 17%, 12%, and so on. An expanding-role flag fires when opportunity share jumps 35% or more, or snaps rise 18+ points, over the last 2 games.
+- **Role filter:** a player needs 35%+ snaps, a 10%+ target share or a 25%+ carry share, and must have been active recently. Backup QBs, low-role players and players ruled out are left out of recommendations. Showdown DSTs are faded when the total is 49 or higher.
+- **Injury redistribution:** only the share an out player actually held recently is vacated. It's split proportionally across healthy teammates, adjusted by with/without splits when the player already missed games, and same-position teammates get 55% priority.
+- **News:** ESPN team news (athlete-tagged, last 6 days) and injury notes are scanned for role language. This nudges usage by ±7–8% and shows up in the edge notes.
+- **Game script:** team volume comes from the team's own pace × (Vegas total)^0.35–0.45, with underdogs throwing more and favorites running more. TDs come from the implied team total (≈0.118 TDs per point), split pass/rush by the team's TD mix and allocated by red-zone and overall share. Bet Lab anytime-TD odds are blended in 50/50, capped at 115% of the team's TD budget. QBs are anchored to their own recent passing.
+- **Matchup:** this season's defense vs position (DK points allowed, shrunk 60%) adjusts efficiency. Player-vs-opponent history (this season and last) appears as an edge note.
+- **Monte Carlo:** 4,000 sims per game. A shared game factor lifts both teams in a shootout, and multinomial target and carry splits mean QB and pass-catchers covary. Mean, floor (20th percentile) and ceiling (90th) come from the sims. 160 sims per player ship to the browser for GPP lineups and captain rankings.
+- `scripts/sanity.py` prints the top projections by position, top values, captain rankings and spot checks.
 
 ## Optimizer
 `assets/solver.js` (javascript-lp-solver, MIT) runs an exact integer program in the browser. It covers salary cap and min salary, classic slots, showdown CPT 1.5x, locks and excludes, max exposure, QB stack and bring-back, min unique players, and showdown game scripts. The contest type (cash, balanced, GPP) and entry-fee tier ($10/$20/$50/$100) set the risk profile. Lineups export as a DraftKings upload CSV. Local storage prefix: `ffx_`.
