@@ -1,20 +1,58 @@
 {
- "generated": "2026-10-12T22:42:46-04:00",
+ "generated": "2026-10-13T18:37:21-04:00",
  "seasons": {
   "nfl": 2026,
   "mlb": 2026,
   "nhl": 20262027
  },
  "checked": 493,
- "conflicts": [],
+ "conflicts": [
+  {
+   "src": "slate_sun.json",
+   "sport": "nfl",
+   "player": "Tyler Johnson",
+   "team": "NYJ",
+   "why": "not on NYJ live 2026 roster for 2026-10-13"
+  }
+ ],
  "unverified": [],
  "stale": [],
  "notes": [],
  "resolved": [
   {
    "src": "slate_sun.json",
+   "player": "Ulysses Bentley IV",
+   "team": "NO",
+   "via": "sleeper live (practice squad/reserve)"
+  },
+  {
+   "src": "slate_sun.json",
+   "player": "Trey Palmer",
+   "team": "NO",
+   "via": "sleeper live (practice squad/reserve)"
+  },
+  {
+   "src": "slate_sun.json",
+   "player": "Xavier Guillory",
+   "team": "BAL",
+   "via": "sleeper live (practice squad/reserve)"
+  },
+  {
+   "src": "slate_sun.json",
+   "player": "James Proche II",
+   "team": "CLE",
+   "via": "sleeper live (practice squad/reserve)"
+  },
+  {
+   "src": "slate_sun.json",
    "player": "Thomas Odukoya",
    "team": "KC",
+   "via": "sleeper live (practice squad/reserve)"
+  },
+  {
+   "src": "slate_sun.json",
+   "player": "Josiah Deguara",
+   "team": "PHI",
    "via": "sleeper live (practice squad/reserve)"
   }
  ]
