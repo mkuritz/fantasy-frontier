@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-13T18:37:21-04:00",
+ "generated": "2026-10-13T21:49:03-04:00",
  "seasons": {
   "nfl": 2026,
   "mlb": 2026,
@@ -19,6 +19,12 @@
  "stale": [],
  "notes": [],
  "resolved": [
+  {
+   "src": "slate_sun.json",
+   "player": "Chris Moore",
+   "team": "BAL",
+   "via": "sleeper live (practice squad/reserve)"
+  },
   {
    "src": "slate_sun.json",
    "player": "Ulysses Bentley IV",
@@ -53,6 +59,12 @@
    "src": "slate_sun.json",
    "player": "Josiah Deguara",
    "team": "PHI",
+   "via": "sleeper live (practice squad/reserve)"
+  },
+  {
+   "src": "slate_sun.json",
+   "player": "Cal Adomitis",
+   "team": "NO",
    "via": "sleeper live (practice squad/reserve)"
   }
  ]
