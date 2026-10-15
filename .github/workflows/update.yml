@@ -56,6 +56,9 @@ jobs:
         continue-on-error: true
         timeout-minutes: 4
         run: python scripts/score_lineups.py
+      - name: Weekly DFS snapshot for Fantasy Front Office (display-only, one-way)
+        continue-on-error: true
+        run: python scripts/weekly_snapshot.py
       - name: Commit if data changed
         run: |
           git config user.name "github-actions[bot]"
