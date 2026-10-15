@@ -1,12 +1,19 @@
 {
- "generated": "2026-10-15T00:28:33-04:00",
+ "generated": "2026-10-15T17:45:28-04:00",
  "seasons": {
   "nfl": 2026,
   "mlb": 2026,
   "nhl": 20262027
  },
- "checked": 500,
+ "checked": 563,
  "conflicts": [
+  {
+   "src": "slate_mon.json",
+   "sport": "nfl",
+   "player": "River Cracraft",
+   "team": "WAS",
+   "why": "not on WAS live 2026 roster for 2026-10-15"
+  },
   {
    "src": "slate_sun.json",
    "sport": "nfl",
@@ -61,6 +68,12 @@
  "stale": [],
  "notes": [],
  "resolved": [
+  {
+   "src": "slate_sun.json",
+   "player": "Jalen Cropper",
+   "team": "NO",
+   "via": "sleeper live (practice squad/reserve)"
+  },
   {
    "src": "slate_sun.json",
    "player": "Thomas Odukoya",
