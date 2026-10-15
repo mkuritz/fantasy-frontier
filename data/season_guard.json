@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-14T13:58:08-04:00",
+ "generated": "2026-10-15T00:28:33-04:00",
  "seasons": {
   "nfl": 2026,
   "mlb": 2026,
@@ -10,58 +10,51 @@
   {
    "src": "slate_sun.json",
    "sport": "nfl",
-   "player": "Chris Moore",
-   "team": "BAL",
-   "why": "not on BAL live 2026 roster for 2026-10-14"
-  },
-  {
-   "src": "slate_sun.json",
-   "sport": "nfl",
    "player": "Ulysses Bentley IV",
    "team": "NO",
-   "why": "not on NO live 2026 roster for 2026-10-14"
+   "why": "not on NO live 2026 roster for 2026-10-15"
   },
   {
    "src": "slate_sun.json",
    "sport": "nfl",
    "player": "Trey Palmer",
    "team": "NO",
-   "why": "not on NO live 2026 roster for 2026-10-14"
+   "why": "not on NO live 2026 roster for 2026-10-15"
   },
   {
    "src": "slate_sun.json",
    "sport": "nfl",
    "player": "Tyler Johnson",
    "team": "NYJ",
-   "why": "not on NYJ live 2026 roster for 2026-10-14"
+   "why": "not on NYJ live 2026 roster for 2026-10-15"
   },
   {
    "src": "slate_sun.json",
    "sport": "nfl",
    "player": "Xavier Guillory",
    "team": "BAL",
-   "why": "not on BAL live 2026 roster for 2026-10-14"
+   "why": "not on BAL live 2026 roster for 2026-10-15"
   },
   {
    "src": "slate_sun.json",
    "sport": "nfl",
    "player": "James Proche II",
    "team": "CLE",
-   "why": "not on CLE live 2026 roster for 2026-10-14"
+   "why": "not on CLE live 2026 roster for 2026-10-15"
   },
   {
    "src": "slate_sun.json",
    "sport": "nfl",
    "player": "Josiah Deguara",
    "team": "PHI",
-   "why": "not on PHI live 2026 roster for 2026-10-14"
+   "why": "not on PHI live 2026 roster for 2026-10-15"
   },
   {
    "src": "slate_sun.json",
    "sport": "nfl",
    "player": "Cal Adomitis",
    "team": "NO",
-   "why": "not on NO live 2026 roster for 2026-10-14"
+   "why": "not on NO live 2026 roster for 2026-10-15"
   }
  ],
  "unverified": [],
