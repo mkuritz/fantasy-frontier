@@ -92,7 +92,7 @@ function bindRows(root){root.querySelectorAll('[data-pid]').forEach(el=>el.oncli
 
 /* ---------- Optimizer (integer program via javascript-lp-solver branch & bound) ---------- */
 function score(p,cfg,rnd,k){let s;
-  if(cfg.contest==='cash'){const l=FEES.cash[cfg.fee].l;s=p.proj+l*(p.floor-p.proj);}
+  if(cfg.contest==='cash'){const l=cfg.med?0:FEES.cash[cfg.fee].l;s=p.proj+l*(p.floor-p.proj);}
   else if(cfg.contest==='bal'){s=p.proj+0.2*(p.ceil-p.proj)-0.05*p.proj*(p.own||0)/100;}
   else{const g=FEES.gpp[cfg.fee];s=p.proj+g.g*(p.ceil-p.proj)-g.b*p.proj*(p.own||0)/100;}
   if(k!=null&&k>=0&&p.sims&&p.sims.length>k)s=0.5*s+0.5*p.sims[k]*(isSD()?1:1);if(rnd)s*=1+rnd*(Math.random()*2-1);return s;}
@@ -158,12 +158,12 @@ function luCard(lu,cls,title,sub,kind){return `<div class="lu ${cls}"><h3>${esc(
 function recs(){const k=lockK();if(S.rec[k])return S.rec[k];const sd=isSD();
   const base={n:1,exp:100,uniq:1,minsal:sd?46000:48500,script:'any'};
   const prev=[];const U=sd?2:3;
-  const safe=optimize(Object.assign({},base,{contest:'cash',fee:50,stack:0,bring:0,uniq:U}),1,prev)[0];
+  const safe=optimize(Object.assign({},base,{contest:'cash',fee:50,med:1,stack:0,bring:0,uniq:U}),1,prev)[0];
   const bal=optimize(Object.assign({},base,{contest:'bal',fee:20,stack:sd?0:1,bring:0,uniq:U}),1,prev)[0];
   const up=optimize(Object.assign({},base,{contest:'gpp',fee:10,stack:sd?0:2,bring:1,script:sd?'shootout':'any',uniq:U}),1,prev)[0]||optimize(Object.assign({},base,{contest:'gpp',fee:10,stack:sd?0:2,bring:1,uniq:1}),1)[0];
   return S.rec[k]={safe,bal,up};}
 function recBlock(){const r=recs();const sd=isSD();if(!r.safe)return '<p>Not enough projected players to build lineups.</p>';
-  return `<div class="lu-grid">${r.safe?luCard(r.safe,'safe','Safe · Cash / 50-50',sd?'Highest floor, CPT on the steadiest volume':'Built on floor: steady volume, no forced stacks','cash'):''}${r.bal?luCard(r.bal,'bal','Balanced · Single-entry',sd?'Best median outcome':'Median-optimal with a QB + 1 stack','bal'):''}${r.up?luCard(r.up,'up','Upside · GPP',sd?'Same-game-parlay logic: shootout script, pass-game CPT, ceiling over chalk':'QB + 2 stack with bring-back, ceiling and leverage over chalk','gpp'):''}</div>`;}
+  return `<div class="lu-grid">${r.safe?luCard(r.safe,'safe','Safe · Cash / 50-50',sd?'Highest median projection: the cash build that scores most on average':'Highest median projection, no forced stacks','cash'):''}${r.bal?luCard(r.bal,'bal','Balanced · Single-entry',sd?'Best median outcome':'Median-optimal with a QB + 1 stack','bal'):''}${r.up?luCard(r.up,'up','Upside · GPP',sd?'Same-game-parlay logic: shootout script, pass-game CPT, ceiling over chalk':'QB + 2 stack with bring-back, ceiling and leverage over chalk','gpp'):''}</div>`;}
 
 /* ---------- Pages ---------- */
 function pSlate(m){const s=sl(),P=elig().filter(p=>p.proj>0);const sd=isSD();
