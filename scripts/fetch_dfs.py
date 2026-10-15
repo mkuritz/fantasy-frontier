@@ -133,6 +133,28 @@ def espn_games(days):
             out[g["away"] + "@" + g["home"]] = g
     return out
 
+GAMEDAY = {"checked": None, "games": 0, "changes": []}
+def gameday_injuries(games, out):
+    """Game day: re-pull each game's own injury/inactive report (ESPN game summary) for games within 8h of kickoff.
+    These override the league-wide report, so a late scratch/inactive drops the player and the cascade boosts his backups."""
+    nowu = dt.datetime.now(dt.timezone.utc)
+    for g in (games.values() if isinstance(games, dict) else games):
+        try: t = dt.datetime.fromisoformat(g["time"].replace("Z", "+00:00"))
+        except Exception: continue
+        if g.get("state") != "pre" or not (0 <= (t - nowu).total_seconds() <= 8 * 3600): continue
+        d = U.get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=%s" % g["id"]) or {}
+        GAMEDAY["games"] += 1
+        for tb in d.get("injuries", []):
+            tm = T((tb.get("team") or {}).get("abbreviation") or "")
+            for i in tb.get("injuries", []):
+                a = i.get("athlete") or {}; nm = norm(a.get("displayName", ""))
+                st_ = (i.get("type") or {}).get("description") or i.get("status")
+                st_ = {"inactive": "Inactive", "out": "Out", "questionable": "Questionable", "doubtful": "Doubtful", "active": "Active"}.get(str(st_).lower(), i.get("status"))
+                old = (out.get((nm, tm)) or {}).get("status")
+                if st_ and st_ != old: GAMEDAY["changes"].append({"name": a.get("displayName"), "team": tm, "from": old, "to": st_})
+                out[(nm, tm)] = out[(nm, "*")] = {"status": st_, "note": "Game-day report (ESPN game page)"}
+    GAMEDAY["checked"] = nowu.isoformat(timespec="minutes")
+
 def injuries():
     d = U.get("https://site.api.espn.com/apis/site/v2/sports/football/nfl/injuries") or {}
     out = {}
@@ -158,7 +180,7 @@ def betlab():
     return pm, td, an
 
 # ---------------- projection model ----------------
-OUT_STATUSES = ("Out", "Injured Reserve", "Doubtful", "Suspension", "Physically Unable to Perform")
+OUT_STATUSES = ("Out", "Inactive", "Injured Reserve", "Doubtful", "Suspension", "Physically Unable to Perform")
 def wmean(vals):  # recency-weighted (most recent weighted most)
     if not vals: return 0.0
     w = [0.75 ** i for i in range(len(vals))]
@@ -596,7 +618,7 @@ def main():
             m = re.search(r"(\d\d)/(\d\d)/(\d{4})", r["Game Info"])
             if m: days.add("%s-%s-%s" % (m.group(3), m.group(1), m.group(2)))
     games = espn_games(days)
-    inj = injuries(); props, td, an = betlab()
+    inj = injuries(); gameday_injuries(games, inj); props, td, an = betlab()
     import model as M
     D = M.Data(SEASON)
     teams_all = set()
@@ -646,6 +668,7 @@ def main():
         meta["backtest"] = {k: r.get(k) for k in ("n", "model", "season_avg", "last_game")}
     except Exception as e: print("backtest failed", e)
     meta["blend"] = "30% usage-model simulation + 70% Sleeper/RotoWire consensus (weight chosen from the weeks 3-5 backtest)"
+    meta["gameday_check"] = GAMEDAY
     U.save("meta.json", meta)
 
 if __name__ == "__main__":
