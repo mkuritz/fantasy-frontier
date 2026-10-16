@@ -102,7 +102,7 @@ function prune(players,cfg,sd){const L=locks(),E=excls();const ok=players.filter
   for(const pos of Object.keys(lim)){const arr=ok.filter(p=>p.pos===pos);const a=[...arr].sort((x,y)=>score(y,cfg)-score(x,cfg)).slice(0,lim[pos]);const b=[...arr].sort((x,y)=>score(y,cfg)/y.sal-score(x,cfg)/x.sal).slice(0,Math.ceil(lim[pos]/2));
     for(const p of a.concat(b,arr.filter(p=>L[p.id])))if(!out.includes(p))out.push(p);}
   return out;}
-function solveOne(players,cfg,prev,expCount,n){const sd=isSD();const L=locks();const model={optimize:'score',opType:'max',constraints:{sal:{max:50000}},variables:{},ints:{}};const C=model.constraints;
+function solveOne(players,cfg,prev,expCount,n){const sd=isSD();const L=locks();const model={optimize:'score',opType:'max',constraints:{sal:{max:Math.min(50000,cfg.cap||50000)}},variables:{},ints:{}};const C=model.constraints;
   const capN=Math.max(1,Math.floor((cfg.exp/100)*n+1e-9));const banned=p=>(expCount[p.id]||0)>=capN&&!L[p.id];
   const rnd=cfg.contest==='bal'&&n>1?0.04:(cfg.contest==='gpp'&&n>1?0.03:0);const K=(cfg.contest==='gpp'&&n>1)?Math.floor(Math.random()*(sl().keep||100)):-1;
   if(!sd){C.sal.min=Math.min(cfg.minsal,49999);Object.assign(C,{QB:{equal:1},DST:{equal:1},RB:{min:2,max:3},WR:{min:3,max:4},TE:{min:1,max:2},FX:{equal:7}});
@@ -308,7 +308,7 @@ function pBest(m){const P=elig().filter(p=>p.proj>0);const sd=isSD();const poss=
 /* ---------- Film Room ---------- */
 
 /* ---------- Lineup track record (pre-lock snapshots graded after the game) ---------- */
-function pTrack(m){const snaps=S.snaps||[],R=(S.trk&&S.trk.slates)||{};const NM={safe:'Safe · Cash',bal:'Balanced · SE',up:'Upside · GPP'};
+function pTrack(m){const snaps=S.snaps||[],R=(S.trk&&S.trk.slates)||{};const NM={safe:'Safe · Cash',bal:'Balanced · SE',up:'Upside · GPP',val:'Value test · ≤$49k (research)'};
   const groups={};snaps.forEach(x=>{if(x.logged_at<x.lock)(groups[x.kind+'-'+x.dg]=groups[x.kind+'-'+x.dg]||[]).push(x)});
   const keys=Object.keys(groups).sort((a,b)=>groups[b][0].lock.localeCompare(groups[a][0].lock));
   const et=t=>new Date(t).toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET';
@@ -322,7 +322,7 @@ function pTrack(m){const snaps=S.snaps||[],R=(S.trk&&S.trk.slates)||{};const NM=
     const st=r.final?`Final ${Object.entries(r.score||{}).map(([t,v])=>t+' '+v).join(', ')}`:r.state==='in'?'In progress (live points)':'Logged, awaiting kickoff';
     h+=`<div class="card" style="margin-bottom:16px"><div class="card-head"><h2>${esc(o.game||o.label)} · ${o.type==='showdown'?'Showdown':'Classic'}</h2><span class="sub">${(()=>{const v=(S.ver||{})[o.logged_at];return v?(v.ok?`<span style="background:#14532d;color:#86efac;border-radius:6px;padding:2px 7px;font-weight:600;margin-right:6px" title="Checked ${esc(et(v.checked_at))} against DraftKings' public draftables: all players on slate and active, salaries match (CPT 1.5x), ≤ $50k, 1 CPT + 5 FLEX, both teams">✓ DK-verified</span>`:`<span style="background:#7f1d1d;color:#fecaca;border-radius:6px;padding:2px 7px;font-weight:600;margin-right:6px" title="${esc(Object.values(v.lineups).flatMap(x=>x.errors).join('; '))}">✗ DK check failed</span>`):'<span style="color:var(--text-3);margin-right:6px">DK check pending</span>'})()}${esc(st)} · lock ${et(o.lock)} · official snapshot ${et(o.logged_at)}${ss.length>1?' ('+ss.length+' pre-lock versions)':''}</span></div><div class="table-wrap"><table class="tight"><thead><tr><th>Lineup</th><th>Players</th><th class="num">Salary</th><th class="num">Proj</th><th class="num">Actual</th><th class="num">% of optimal</th></tr></thead><tbody>`;
     const row=(nm,lu,g)=>`<tr><td><b>${nm}</b></td><td style="font-size:12px">${lu.rows.map((x,i)=>{const gx=g&&g.rows&&g.rows[i];return `${x.slot==='CPT'?'<b>CPT</b> ':''}${esc(x.name)}${gx&&gx.actual!=null?` <span class="mono" style="color:var(--text-3)">${f1(gx.actual)}</span>`:''}`}).join(' · ')}</td><td class="num">${lu.sal?fmt$(lu.sal):'–'}</td><td class="num">${f1(lu.proj)}</td><td class="num">${g?f1(g.actual):'–'}</td><td class="num">${g&&g.pct_of_optimal!=null?f1(g.pct_of_optimal)+'%':'–'}</td></tr>`;
-    for(const t of ['safe','bal','up'])if(o.lineups[t])h+=row(NM[t],o.lineups[t],r.lineups&&r.lineups[t]);
+    for(const t of ['safe','bal','up','val'])if(o.lineups[t])h+=row(NM[t],o.lineups[t],r.lineups&&r.lineups[t]);
     for(const [t,nm] of [['chalk','Baseline · chalk'],['max_salary','Baseline · max salary']])if(o.baselines&&o.baselines[t])h+=row(nm,o.baselines[t],r.baselines&&r.baselines[t]);
     h+=r.hindsight?row('Hindsight optimal',Object.assign({proj:null},r.hindsight),r.hindsight):`<tr><td><b>Hindsight optimal</b></td><td colspan="5" style="color:var(--text-3)">Computed once the game is final</td></tr>`;
     h+=`<tr><td><b>Contest field</b></td><td colspan="5" style="color:var(--text-3)">Unavailable: no permitted public source for DraftKings cash lines or winning scores</td></tr></tbody></table></div>${(r.notes||[]).length?`<p style="font-size:12px;color:var(--text-3);margin-top:8px">${r.notes.map(esc).join('. ')}.</p>`:''}</div>`;}

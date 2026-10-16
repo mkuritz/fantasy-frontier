@@ -13,9 +13,13 @@ const ctx={console};ctx.self=ctx;vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(R,'assets','solver.js'),'utf8'),ctx);
 
 const pre=`var S={rec:{},lock:{},excl:{},kind:${JSON.stringify(kind)},slates:{}};var SL=null;const sl=()=>SL;const isSD=()=>SL.type==='showdown';const lockK=()=>'k';const locks=()=>({});const excls=()=>({});const pool=()=>SL.players.filter(p=>p.sal);const fmt$=n=>'$'+(n/1000).toFixed(1)+'k';`+app.split('\n').find(l=>l.startsWith('const FEES='));
-vm.runInContext(pre+app.slice(a,b)+';this.recs=recs;this.why=why;this.setSL=s=>{SL=s};',ctx);
+vm.runInContext(pre+app.slice(a,b)+';this.recs=recs;this.why=why;this.optimize=optimize;this.setSL=s=>{SL=s};',ctx);
 if(!ctx.solver)throw new Error('solver not loaded');
 ctx.setSL(slate);const r=ctx.recs();
+// Research-only salary test (not shown as a public pick): median-optimal build capped at $49k, i.e. leaves >= $1k unused.
+// Added Oct 16 2026 after a retro test on the first two graded showdowns (data/track/salary_study.json); graded like the others
+// so it only goes public if it keeps scoring as well as the full-cap builds.
+if(slate.type==='showdown'){const v=ctx.optimize({n:1,exp:100,uniq:1,minsal:46000,script:'any',contest:'cash',fee:50,med:1,stack:0,bring:0,cap:49000},1,[])[0];if(v)r.val=v;}
 const out={logged_at:new Date().toISOString(),kind,dg:slate.dg,label:slate.label.trim(),type:slate.type,lock:lock.toISOString(),data_fetched:slate.fetched,game:(slate.games[0]||{}).key,espn_id:(slate.games[0]||{}).id,lineups:{}};
 for(const [k,lu] of Object.entries(r)){if(!lu)continue;out.lineups[k]={proj:+lu.proj.toFixed(2),sal:lu.sal,floor:+lu.floor.toFixed(1),ceil:+lu.ceil.toFixed(1),own:Math.round(lu.own),why:ctx.why(lu),
   rows:lu.rows.map(x=>({slot:x.slot,id:x.p.id,name:x.p.name,team:x.p.team,pos:x.p.pos,sal:x.sal,proj:+x.pts.toFixed(2),edges:x.p.edges||[]}))};}

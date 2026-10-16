@@ -79,6 +79,7 @@ def hindsight(slate_players, A):
         a = A.get(key_for(p)); 
         if a: pool.append((p, a["pts"]))
     pool.sort(key=lambda x: -x[1]); pool = pool[:26]; best = None
+    caps = (50000, 49000, 48000, 47000, 46000, 45000); bycap = {c: None for c in caps}
     for ci, (c, cp) in enumerate(pool):
         if not c.get("cid"): continue
         rest = [x for i, x in enumerate(pool) if i != ci]
@@ -88,11 +89,14 @@ def hindsight(slate_players, A):
             if len({c["team"]} | {x[0]["team"] for x in combo}) < 2: continue
             s = 1.5 * cp + sum(x[1] for x in combo)
             if not best or s > best[0]: best = (s, c, combo, sal)
+            for cap in caps:
+                if sal <= cap and (bycap[cap] is None or s > bycap[cap]): bycap[cap] = s
     if not best: return None
     s, c, combo, sal = best
     rows = [{"slot": "CPT", "name": c["name"], "team": c["team"], "pos": c["pos"], "sal": c["csal"], "actual": round(1.5 * A[key_for(c)]["pts"], 2)}] + \
            [{"slot": "FLEX", "name": p["name"], "team": p["team"], "pos": p["pos"], "sal": p["sal"], "actual": round(a, 2)} for p, a in combo]
-    return {"actual": round(s, 2), "sal": sal, "rows": rows}
+    return {"actual": round(s, 2), "sal": sal, "rows": rows,
+            "best_by_cap": {str(c): (round(v, 2) if v is not None else None) for c, v in bycap.items()}}
 def main():
     f = os.path.join(TR, "lineups.jsonl")
     if not os.path.exists(f): print("no snapshots"); return
@@ -116,7 +120,7 @@ def main():
         entry["lineups"] = {}
         for k, lu in last["lineups"].items():
             tot, rows = score_rows(lu["rows"], A)
-            entry["lineups"][k] = {"proj": lu["proj"], "actual": tot, "sal": lu["sal"], "rows": rows}
+            entry["lineups"][k] = {"proj": lu["proj"], "actual": tot, "sal": lu["sal"], "sal_left": 50000 - (lu["sal"] or 0), "rows": rows}
         entry["baselines"] = {}
         for k, lu in (last.get("baselines") or {}).items():
             if lu: tot, rows = score_rows(lu["rows"], A); entry["baselines"][k] = {"proj": lu["proj"], "actual": tot, "rows": rows}
