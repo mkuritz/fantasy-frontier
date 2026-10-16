@@ -1,8 +1,8 @@
 {
- "generated": "2026-10-15T21:45Z",
+ "generated": "2026-10-16T00:09Z",
  "slate": "sun",
  "slate_start": "2026-10-18T13:00:00.0000000",
- "source_fetched": "2026-10-15T21:44+00:00",
+ "source_fetched": "2026-10-16T00:08+00:00",
  "popular": [
   {
    "name": "Puka Nacua",
@@ -11,7 +11,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 24.4,
-   "own": 48.2,
+   "own": 47.6,
    "status": "Active",
    "note": "~48% projected roster rate (estimate)"
   },
@@ -21,10 +21,10 @@
    "pos": "RB",
    "opp": "ARI",
    "game": "ARI@LAR",
-   "proj": 22.8,
-   "own": 33.5,
+   "proj": 22.5,
+   "own": 31.9,
    "status": "Active",
-   "note": "~34% projected roster rate (estimate)"
+   "note": "~32% projected roster rate (estimate)"
   },
   {
    "name": "Panthers",
@@ -33,7 +33,7 @@
    "opp": "PHI",
    "game": "CAR@PHI",
    "proj": 9.5,
-   "own": 31.7,
+   "own": 31.8,
    "status": "",
    "note": "~32% projected roster rate (estimate)"
   },
@@ -54,7 +54,7 @@
    "pos": "WR",
    "opp": "CHI",
    "game": "CHI@ATL",
-   "proj": 19.3,
+   "proj": 19.4,
    "own": 27.8,
    "status": "Active",
    "note": "~28% projected roster rate (estimate)"
@@ -66,7 +66,7 @@
    "opp": "TEN",
    "game": "TEN@IND",
    "proj": 23.0,
-   "own": 23.2,
+   "own": 23.4,
    "status": "Active",
    "note": "~23% projected roster rate (estimate)"
   },
@@ -77,7 +77,7 @@
    "opp": "LAC",
    "game": "LAC@KC",
    "proj": 23.8,
-   "own": 22.9,
+   "own": 23.1,
    "status": "Active",
    "note": "~23% projected roster rate (estimate)"
   },
@@ -88,7 +88,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 17.0,
-   "own": 19.8,
+   "own": 19.5,
    "status": "Active",
    "note": "~20% projected roster rate (estimate)"
   },
@@ -104,24 +104,24 @@
    "note": "~18% projected roster rate (estimate)"
   },
   {
+   "name": "Chris Olave",
+   "team": "NO",
+   "pos": "WR",
+   "opp": "NYG",
+   "game": "NO@NYG",
+   "proj": 17.9,
+   "own": 17.9,
+   "status": "Questionable",
+   "note": "~18% projected roster rate (estimate)"
+  },
+  {
    "name": "Zay Flowers",
    "team": "BAL",
    "pos": "WR",
    "opp": "CLE",
    "game": "BAL@CLE",
    "proj": 17.2,
-   "own": 18.0,
-   "status": "Questionable",
-   "note": "~18% projected roster rate (estimate)"
-  },
-  {
-   "name": "Chris Olave",
-   "team": "NO",
-   "pos": "WR",
-   "opp": "NYG",
-   "game": "NO@NYG",
-   "proj": 17.8,
-   "own": 17.5,
+   "own": 17.9,
    "status": "Questionable",
    "note": "~18% projected roster rate (estimate)"
   },
@@ -131,10 +131,10 @@
    "pos": "TE",
    "opp": "NO",
    "game": "NO@NYG",
-   "proj": 14.7,
-   "own": 17.3,
+   "proj": 14.8,
+   "own": 17.6,
    "status": "Active",
-   "note": "~17% projected roster rate (estimate)"
+   "note": "~18% projected roster rate (estimate)"
   }
  ],
  "core": [
@@ -145,7 +145,7 @@
    "opp": "BUF",
    "game": "BUF@LV",
    "proj": 20.0,
-   "own": 10.6,
+   "own": 10.5,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -156,7 +156,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 23.5,
-   "own": 13.0,
+   "own": 13.1,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -166,8 +166,8 @@
    "pos": "RB",
    "opp": "ARI",
    "game": "ARI@LAR",
-   "proj": 22.8,
-   "own": 33.5,
+   "proj": 22.5,
+   "own": 31.9,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -189,7 +189,7 @@
    "opp": "TEN",
    "game": "TEN@IND",
    "proj": 23.0,
-   "own": 23.2,
+   "own": 23.4,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -200,7 +200,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 24.4,
-   "own": 48.2,
+   "own": 47.6,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -221,7 +221,7 @@
    "pos": "WR",
    "opp": "CHI",
    "game": "CHI@ATL",
-   "proj": 19.3,
+   "proj": 19.4,
    "own": 27.8,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
@@ -232,8 +232,8 @@
    "pos": "WR",
    "opp": "NYJ",
    "game": "NYJ@NE",
-   "proj": 8.3,
-   "own": 7.8,
+   "proj": 8.2,
+   "own": 7.4,
    "status": "",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -243,8 +243,8 @@
    "pos": "TE",
    "opp": "NO",
    "game": "NO@NYG",
-   "proj": 14.7,
-   "own": 17.3,
+   "proj": 14.8,
+   "own": 17.6,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -255,7 +255,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 7.0,
-   "own": 4.4,
+   "own": 4.5,
    "status": "",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -266,7 +266,7 @@
    "opp": "PHI",
    "game": "CAR@PHI",
    "proj": 9.5,
-   "own": 31.7,
+   "own": 31.8,
    "status": "",
    "note": "Optimal-lineup core: top projected value at the position"
   }
@@ -279,7 +279,7 @@
    "opp": "BUF",
    "game": "BUF@LV",
    "proj": 20.0,
-   "own": 10.6,
+   "own": 10.5,
    "status": "Active",
    "note": "Favorable matchup vs BUF; team implied total 24.5"
   },
@@ -311,8 +311,8 @@
    "pos": "WR",
    "opp": "BUF",
    "game": "BUF@LV",
-   "proj": 9.9,
-   "own": 6.1,
+   "proj": 10.0,
+   "own": 6.2,
    "status": "Active",
    "note": "Favorable matchup vs BUF; team implied total 24.5"
   },
@@ -322,8 +322,8 @@
    "pos": "TE",
    "opp": "LV",
    "game": "BUF@LV",
-   "proj": 9.6,
-   "own": 3.5,
+   "proj": 9.5,
+   "own": 3.4,
    "status": "Active",
    "note": "Favorable matchup vs LV; team implied total 29.0"
   },
@@ -345,7 +345,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 7.0,
-   "own": 4.4,
+   "own": 4.5,
    "status": "",
    "note": "Favorable matchup vs ARI; team implied total 32.0"
   },
@@ -356,7 +356,7 @@
    "opp": "KC",
    "game": "LAC@KC",
    "proj": 6.1,
-   "own": 2.8,
+   "own": 2.7,
    "status": "",
    "note": "Favorable matchup vs KC; team implied total 16.5"
   },
@@ -377,8 +377,8 @@
    "pos": "TE",
    "opp": "ARI",
    "game": "ARI@LAR",
-   "proj": 5.4,
-   "own": 1.3,
+   "proj": 5.5,
+   "own": 1.4,
    "status": "Questionable",
    "note": "Favorable matchup vs ARI; team implied total 32.0"
   },
