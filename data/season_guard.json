@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-16T00:55:15-04:00",
+ "generated": "2026-10-16T13:01:59-04:00",
  "seasons": {
   "nfl": 2026,
   "mlb": 2026,
@@ -20,6 +20,13 @@
    "player": "Ulysses Bentley IV",
    "team": "NO",
    "why": "not on NO live 2026 roster for 2026-10-16"
+  },
+  {
+   "src": "slate_sun.json",
+   "sport": "nfl",
+   "player": "Darius Slayton",
+   "team": "IND",
+   "why": "not on IND live 2026 roster for 2026-10-16"
   },
   {
    "src": "slate_sun.json",
