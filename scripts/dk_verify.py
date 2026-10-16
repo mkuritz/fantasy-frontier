@@ -25,7 +25,7 @@ def dk_get(dg):
     import urllib.request
     for _ in range(3):
         try:
-            req = urllib.request.Request("https://api.draftkings.com/draftgroups/v1/draftgroups/%s/draftables" % dg, headers={"Accept": "application/json", "User-Agent": "SportsLabs-FantasyFrontier/1.0 (+https://mkuritz.github.io/fantasy-frontier/)"})
+            req = urllib.request.Request("https://api.draftkings.com/draftgroups/v1/draftgroups/%s/draftables" % dg, headers={"Accept": "application/json", "User-Agent": "SportsLabs-FantasyFrontier/1.0 (+https://fantasyfrontier.sportslabshq.com/)"})
             with urllib.request.urlopen(req, timeout=40) as r: return json.loads(r.read())
         except Exception as e: print("DK fetch fail", e)
     return None

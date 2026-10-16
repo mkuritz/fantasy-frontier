@@ -1,7 +1,7 @@
 """Shared helpers for the free-source cross-check (data/xcheck.json). Every source is optional."""
 import csv, gzip, io, json, os, time, datetime as dt
 from urllib.request import Request, urlopen
-UA = {"User-Agent": "Mozilla/5.0 (SportsLabs data refresh; +https://mkuritz.github.io/sports-labs/)"}
+UA = {"User-Agent": "Mozilla/5.0 (SportsLabs data refresh; +https://sportslabshq.com/)"}
 class Src:
     def __init__(s): s.list = []
     def get(s, name, url, what, fn, link=None, new=True):

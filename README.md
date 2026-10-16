@@ -2,7 +2,7 @@
 
 A Sports Labs product. DraftKings NFL daily fantasy research: stat-based projections, value plays, chalk vs leverage, recommended lineups and a client-side lineup optimizer for the **Thursday Night (showdown)**, **Sunday main (classic)** and **Monday Night (showdown)** slates.
 
-Live: https://mkuritz.github.io/fantasy-frontier/
+Live: https://fantasyfrontier.sportslabshq.com/
 
 ## Data (all free)
 | What | Source | Real or estimated |
