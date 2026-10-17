@@ -1,8 +1,8 @@
 {
- "generated": "2026-10-17T19:31Z",
+ "generated": "2026-10-17T19:46Z",
  "slate": "sun",
  "slate_start": "2026-10-18T13:00:00.0000000",
- "source_fetched": "2026-10-17T17:00+00:00",
+ "source_fetched": "2026-10-17T19:46+00:00",
  "popular": [
   {
    "name": "Puka Nacua",
@@ -11,7 +11,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 24.3,
-   "own": 44.7,
+   "own": 44.6,
    "status": "Active",
    "note": "~45% projected roster rate (estimate)"
   },
@@ -22,7 +22,7 @@
    "opp": "CHI",
    "game": "CHI@ATL",
    "proj": 20.2,
-   "own": 30.8,
+   "own": 30.7,
    "status": "Active",
    "note": "~31% projected roster rate (estimate)"
   },
@@ -32,10 +32,10 @@
    "pos": "RB",
    "opp": "CHI",
    "game": "CHI@ATL",
-   "proj": 27.0,
-   "own": 30.6,
+   "proj": 27.1,
+   "own": 30.5,
    "status": "Active",
-   "note": "~31% projected roster rate (estimate)"
+   "note": "~30% projected roster rate (estimate)"
   },
   {
    "name": "Panthers",
@@ -55,7 +55,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 22.2,
-   "own": 26.0,
+   "own": 25.8,
    "status": "Active",
    "note": "~26% projected roster rate (estimate)"
   },
@@ -65,8 +65,8 @@
    "pos": "RB",
    "opp": "LAC",
    "game": "LAC@KC",
-   "proj": 25.4,
-   "own": 25.1,
+   "proj": 25.3,
+   "own": 24.8,
    "status": "Active",
    "note": "~25% projected roster rate (estimate)"
   },
@@ -76,8 +76,8 @@
    "pos": "RB",
    "opp": "TEN",
    "game": "TEN@IND",
-   "proj": 23.3,
-   "own": 20.8,
+   "proj": 23.2,
+   "own": 20.6,
    "status": "Active",
    "note": "~21% projected roster rate (estimate)"
   },
@@ -93,23 +93,23 @@
    "note": "~18% projected roster rate (estimate)"
   },
   {
-   "name": "Xavier Worthy",
-   "team": "KC",
-   "pos": "WR",
-   "opp": "LAC",
-   "game": "LAC@KC",
-   "proj": 13.5,
-   "own": 17.6,
-   "status": "Active",
-   "note": "~18% projected roster rate (estimate)"
-  },
-  {
    "name": "Isaiah Likely",
    "team": "NYG",
    "pos": "TE",
    "opp": "NO",
    "game": "NO@NYG",
    "proj": 15.0,
+   "own": 17.5,
+   "status": "Active",
+   "note": "~18% projected roster rate (estimate)"
+  },
+  {
+   "name": "Xavier Worthy",
+   "team": "KC",
+   "pos": "WR",
+   "opp": "LAC",
+   "game": "LAC@KC",
+   "proj": 13.5,
    "own": 17.4,
    "status": "Active",
    "note": "~17% projected roster rate (estimate)"
@@ -121,7 +121,7 @@
    "opp": "NYG",
    "game": "NO@NYG",
    "proj": 18.0,
-   "own": 17.2,
+   "own": 17.1,
    "status": "Questionable",
    "note": "~17% projected roster rate (estimate)"
   },
@@ -132,7 +132,7 @@
    "opp": "PHI",
    "game": "CAR@PHI",
    "proj": 18.9,
-   "own": 16.3,
+   "own": 16.2,
    "status": "Active",
    "note": "~16% projected roster rate (estimate)"
   }
@@ -167,7 +167,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 22.2,
-   "own": 26.0,
+   "own": 25.8,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -177,8 +177,8 @@
    "pos": "RB",
    "opp": "CHI",
    "game": "CHI@ATL",
-   "proj": 27.0,
-   "own": 30.6,
+   "proj": 27.1,
+   "own": 30.5,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -189,7 +189,7 @@
    "opp": "PHI",
    "game": "CAR@PHI",
    "proj": 18.9,
-   "own": 16.3,
+   "own": 16.2,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -200,7 +200,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 24.3,
-   "own": 44.7,
+   "own": 44.6,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -211,7 +211,7 @@
    "opp": "LAC",
    "game": "LAC@KC",
    "proj": 13.5,
-   "own": 17.6,
+   "own": 17.4,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -222,7 +222,7 @@
    "opp": "CHI",
    "game": "CHI@ATL",
    "proj": 20.2,
-   "own": 30.8,
+   "own": 30.7,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -232,8 +232,8 @@
    "pos": "WR",
    "opp": "TB",
    "game": "PIT@TB",
-   "proj": 11.2,
-   "own": 12.2,
+   "proj": 11.4,
+   "own": 12.6,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -244,7 +244,7 @@
    "opp": "NO",
    "game": "NO@NYG",
    "proj": 15.0,
-   "own": 17.4,
+   "own": 17.5,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -289,8 +289,8 @@
    "pos": "RB",
    "opp": "CAR",
    "game": "CAR@PHI",
-   "proj": 14.8,
-   "own": 10.5,
+   "proj": 14.6,
+   "own": 10.0,
    "status": "Active",
    "note": "Favorable matchup vs CAR; team implied total 18.25"
   },
@@ -389,7 +389,7 @@
    "opp": "IND",
    "game": "TEN@IND",
    "proj": 12.0,
-   "own": 4.5,
+   "own": 4.4,
    "status": "Active",
    "note": "Favorable matchup vs IND; team implied total 18.75"
   },
