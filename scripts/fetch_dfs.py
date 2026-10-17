@@ -11,7 +11,7 @@ import weather as W
 NOW = dt.datetime.now(dt.timezone.utc)
 ET = dt.timezone(dt.timedelta(hours=-4))  # EDT; good enough for slate-day bucketing during the season
 SEASON = NOW.year if NOW.month >= 8 else NOW.year - 1
-BETLAB = "https://raw.githubusercontent.com/mkuritz/bet-lab/main/data/"
+BETLAB = "https://betlab.sportslabshq.com/data/"
 NFLV = "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_%d.csv"
 TEAMFIX = {"LA": "LAR", "WSH": "WAS", "JAC": "JAX"}
 SCORE = "DK: 4pt pass TD, .04/pass yd, -1 INT, +3 at 300 pass yds; .1/rush+rec yd, 6pt rush/rec TD, +3 at 100 rush or rec yds; 1 PPR; -1 fumble lost; 2 for 2-pt"
