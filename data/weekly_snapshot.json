@@ -1,8 +1,8 @@
 {
- "generated": "2026-10-17T20:30Z",
+ "generated": "2026-10-17T21:01Z",
  "slate": "sun",
  "slate_start": "2026-10-18T13:00:00.0000000",
- "source_fetched": "2026-10-17T20:24+00:00",
+ "source_fetched": "2026-10-17T21:00+00:00",
  "popular": [
   {
    "name": "Puka Nacua",
@@ -11,7 +11,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 24.3,
-   "own": 46.0,
+   "own": 45.7,
    "status": "Active",
    "note": "~46% projected roster rate (estimate)"
   },
@@ -22,7 +22,7 @@
    "opp": "PHI",
    "game": "CAR@PHI",
    "proj": 9.3,
-   "own": 29.1,
+   "own": 29.0,
    "status": "",
    "note": "~29% projected roster rate (estimate)"
   },
@@ -32,8 +32,19 @@
    "pos": "WR",
    "opp": "CHI",
    "game": "CHI@ATL",
-   "proj": 19.4,
-   "own": 27.6,
+   "proj": 19.6,
+   "own": 28.3,
+   "status": "Active",
+   "note": "~28% projected roster rate (estimate)"
+  },
+  {
+   "name": "Bijan Robinson",
+   "team": "ATL",
+   "pos": "RB",
+   "opp": "CHI",
+   "game": "CHI@ATL",
+   "proj": 26.1,
+   "own": 27.9,
    "status": "Active",
    "note": "~28% projected roster rate (estimate)"
   },
@@ -44,18 +55,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 22.2,
-   "own": 27.1,
-   "status": "Active",
-   "note": "~27% projected roster rate (estimate)"
-  },
-  {
-   "name": "Bijan Robinson",
-   "team": "ATL",
-   "pos": "RB",
-   "opp": "CHI",
-   "game": "CHI@ATL",
-   "proj": 25.9,
-   "own": 26.7,
+   "own": 27.2,
    "status": "Active",
    "note": "~27% projected roster rate (estimate)"
   },
@@ -66,7 +66,7 @@
    "opp": "LAC",
    "game": "LAC@KC",
    "proj": 25.3,
-   "own": 26.1,
+   "own": 26.2,
    "status": "Active",
    "note": "~26% projected roster rate (estimate)"
   },
@@ -77,7 +77,7 @@
    "opp": "TEN",
    "game": "TEN@IND",
    "proj": 23.3,
-   "own": 21.9,
+   "own": 21.8,
    "status": "Active",
    "note": "~22% projected roster rate (estimate)"
   },
@@ -88,7 +88,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 17.0,
-   "own": 19.0,
+   "own": 18.9,
    "status": "Active",
    "note": "~19% projected roster rate (estimate)"
   },
@@ -110,7 +110,7 @@
    "opp": "NYG",
    "game": "NO@NYG",
    "proj": 18.0,
-   "own": 17.8,
+   "own": 17.5,
    "status": "Questionable",
    "note": "~18% projected roster rate (estimate)"
   },
@@ -121,9 +121,9 @@
    "opp": "NO",
    "game": "NO@NYG",
    "proj": 14.9,
-   "own": 17.5,
+   "own": 17.3,
    "status": "Active",
-   "note": "~18% projected roster rate (estimate)"
+   "note": "~17% projected roster rate (estimate)"
   },
   {
    "name": "Chuba Hubbard",
@@ -132,7 +132,7 @@
    "opp": "PHI",
    "game": "CAR@PHI",
    "proj": 18.6,
-   "own": 16.1,
+   "own": 16.2,
    "status": "Active",
    "note": "~16% projected roster rate (estimate)"
   }
@@ -145,7 +145,7 @@
    "opp": "BUF",
    "game": "BUF@LV",
    "proj": 20.0,
-   "own": 10.2,
+   "own": 10.1,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -156,7 +156,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 23.4,
-   "own": 12.4,
+   "own": 12.2,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -167,7 +167,18 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 22.2,
-   "own": 27.1,
+   "own": 27.2,
+   "status": "Active",
+   "note": "Optimal-lineup core: top projected value at the position"
+  },
+  {
+   "name": "Bijan Robinson",
+   "team": "ATL",
+   "pos": "RB",
+   "opp": "CHI",
+   "game": "CHI@ATL",
+   "proj": 26.1,
+   "own": 27.9,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -178,18 +189,7 @@
    "opp": "LAC",
    "game": "LAC@KC",
    "proj": 25.3,
-   "own": 26.1,
-   "status": "Active",
-   "note": "Optimal-lineup core: top projected value at the position"
-  },
-  {
-   "name": "Bijan Robinson",
-   "team": "ATL",
-   "pos": "RB",
-   "opp": "CHI",
-   "game": "CHI@ATL",
-   "proj": 25.9,
-   "own": 26.7,
+   "own": 26.2,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -200,7 +200,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 24.3,
-   "own": 46.0,
+   "own": 45.7,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -232,8 +232,8 @@
    "pos": "WR",
    "opp": "CHI",
    "game": "CHI@ATL",
-   "proj": 19.4,
-   "own": 27.6,
+   "proj": 19.6,
+   "own": 28.3,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -244,7 +244,7 @@
    "opp": "NO",
    "game": "NO@NYG",
    "proj": 14.9,
-   "own": 17.5,
+   "own": 17.3,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -266,7 +266,7 @@
    "opp": "PHI",
    "game": "CAR@PHI",
    "proj": 9.3,
-   "own": 29.1,
+   "own": 29.0,
    "status": "",
    "note": "Optimal-lineup core: top projected value at the position"
   }
@@ -279,7 +279,7 @@
    "opp": "BUF",
    "game": "BUF@LV",
    "proj": 20.0,
-   "own": 10.2,
+   "own": 10.1,
    "status": "Active",
    "note": "Favorable matchup vs BUF; team implied total 24.0"
   },
@@ -289,8 +289,8 @@
    "pos": "RB",
    "opp": "CAR",
    "game": "CAR@PHI",
-   "proj": 13.6,
-   "own": 8.0,
+   "proj": 13.4,
+   "own": 7.7,
    "status": "Active",
    "note": "Favorable matchup vs CAR; team implied total 18.25"
   },
@@ -300,8 +300,8 @@
    "pos": "RB",
    "opp": "NO",
    "game": "NO@NYG",
-   "proj": 12.4,
-   "own": 4.6,
+   "proj": 12.5,
+   "own": 4.7,
    "status": "Active",
    "note": "Favorable matchup vs NO; team implied total 22.5"
   },
@@ -312,7 +312,7 @@
    "opp": "BUF",
    "game": "BUF@LV",
    "proj": 12.3,
-   "own": 12.1,
+   "own": 12.0,
    "status": "Active",
    "note": "Favorable matchup vs BUF; team implied total 24.0"
   },
@@ -350,17 +350,6 @@
    "note": "Favorable matchup vs ARI; team implied total 32.0"
   },
   {
-   "name": "David Njoku",
-   "team": "LAC",
-   "pos": "TE",
-   "opp": "KC",
-   "game": "LAC@KC",
-   "proj": 5.8,
-   "own": 2.2,
-   "status": "",
-   "note": "Favorable matchup vs KC; team implied total 17.0"
-  },
-  {
    "name": "Cody White",
    "team": "LV",
    "pos": "WR",
@@ -370,6 +359,17 @@
    "own": 2.0,
    "status": "Active",
    "note": "Favorable matchup vs BUF; team implied total 24.0"
+  },
+  {
+   "name": "David Njoku",
+   "team": "LAC",
+   "pos": "TE",
+   "opp": "KC",
+   "game": "LAC@KC",
+   "proj": 5.7,
+   "own": 2.1,
+   "status": "",
+   "note": "Favorable matchup vs KC; team implied total 17.0"
   },
   {
    "name": "Tony Pollard",
@@ -400,7 +400,7 @@
    "opp": "BUF",
    "game": "BUF@LV",
    "proj": 17.0,
-   "own": 10.6,
+   "own": 10.7,
    "status": "Active",
    "note": "Favorable matchup vs BUF; team implied total 24.0"
   }
