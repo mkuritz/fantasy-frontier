@@ -1,8 +1,8 @@
 {
- "generated": "2026-10-18T00:30Z",
+ "generated": "2026-10-18T01:01Z",
  "slate": "sun",
  "slate_start": "2026-10-18T13:00:00.0000000",
- "source_fetched": "2026-10-17T21:56+00:00",
+ "source_fetched": "2026-10-18T01:00+00:00",
  "popular": [
   {
    "name": "Puka Nacua",
@@ -55,7 +55,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 22.2,
-   "own": 27.0,
+   "own": 26.9,
    "status": "Active",
    "note": "~27% projected roster rate (estimate)"
   },
@@ -65,8 +65,8 @@
    "pos": "RB",
    "opp": "LAC",
    "game": "LAC@KC",
-   "proj": 25.3,
-   "own": 26.0,
+   "proj": 25.4,
+   "own": 26.2,
    "status": "Active",
    "note": "~26% projected roster rate (estimate)"
   },
@@ -99,7 +99,7 @@
    "opp": "LAC",
    "game": "LAC@KC",
    "proj": 13.6,
-   "own": 18.4,
+   "own": 18.5,
    "status": "Active",
    "note": "~18% projected roster rate (estimate)"
   },
@@ -121,7 +121,7 @@
    "opp": "NO",
    "game": "NO@NYG",
    "proj": 14.9,
-   "own": 17.4,
+   "own": 17.3,
    "status": "Active",
    "note": "~17% projected roster rate (estimate)"
   },
@@ -167,7 +167,7 @@
    "opp": "ARI",
    "game": "ARI@LAR",
    "proj": 22.2,
-   "own": 27.0,
+   "own": 26.9,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -188,8 +188,8 @@
    "pos": "RB",
    "opp": "LAC",
    "game": "LAC@KC",
-   "proj": 25.3,
-   "own": 26.0,
+   "proj": 25.4,
+   "own": 26.2,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -211,7 +211,7 @@
    "opp": "LAC",
    "game": "LAC@KC",
    "proj": 13.6,
-   "own": 18.4,
+   "own": 18.5,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -244,7 +244,7 @@
    "opp": "NO",
    "game": "NO@NYG",
    "proj": 14.9,
-   "own": 17.4,
+   "own": 17.3,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
