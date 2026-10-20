@@ -3,7 +3,7 @@
 'use strict';
 const LS='ffx_';
 const $=(s,r=document)=>r.querySelector(s);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/Sleeper trending add/g,'Trending add').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ls={get:(k,d)=>{try{const v=localStorage.getItem(LS+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(LS+k,JSON.stringify(v))}catch(e){}}};
 const fmt$=n=>'$'+(n/1000).toFixed(1)+'k';
 const f1=n=>(n==null?'–':(+n).toFixed(1));
