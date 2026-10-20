@@ -1,8 +1,8 @@
 {
- "generated": "2026-10-20T04:30Z",
+ "generated": "2026-10-20T05:31Z",
  "slate": "sun",
  "slate_start": "2026-10-25T13:00:00.0000000",
- "source_fetched": "2026-10-20T04:15+00:00",
+ "source_fetched": "2026-10-20T05:30+00:00",
  "popular": [
   {
    "name": "Puka Nacua",
@@ -10,7 +10,7 @@
    "pos": "WR",
    "opp": "LV",
    "game": "LAR@LV",
-   "proj": 27.4,
+   "proj": 27.5,
    "own": 55,
    "status": "Active",
    "note": "~55% projected roster rate (estimate)"
@@ -22,20 +22,9 @@
    "opp": "GB",
    "game": "GB@DET",
    "proj": 28.6,
-   "own": 36.2,
+   "own": 35.2,
    "status": "Active",
-   "note": "~36% projected roster rate (estimate)"
-  },
-  {
-   "name": "Kyren Williams",
-   "team": "LAR",
-   "pos": "RB",
-   "opp": "LV",
-   "game": "LAR@LV",
-   "proj": 21.6,
-   "own": 26.9,
-   "status": "Active",
-   "note": "~27% projected roster rate (estimate)"
+   "note": "~35% projected roster rate (estimate)"
   },
   {
    "name": "Zay Flowers",
@@ -49,15 +38,37 @@
    "note": "~27% projected roster rate (estimate)"
   },
   {
+   "name": "Kyren Williams",
+   "team": "LAR",
+   "pos": "RB",
+   "opp": "LV",
+   "game": "LAR@LV",
+   "proj": 21.6,
+   "own": 26.3,
+   "status": "Active",
+   "note": "~26% projected roster rate (estimate)"
+  },
+  {
+   "name": "Christian McCaffrey",
+   "team": "SF",
+   "pos": "RB",
+   "opp": "ATL",
+   "game": "SF@ATL",
+   "proj": 22.3,
+   "own": 24.8,
+   "status": "Active",
+   "note": "~25% projected roster rate (estimate)"
+  },
+  {
    "name": "Matthew Golden",
    "team": "GB",
    "pos": "WR",
    "opp": "DET",
    "game": "GB@DET",
    "proj": 17.8,
-   "own": 23.4,
+   "own": 23.6,
    "status": "Active",
-   "note": "~23% projected roster rate (estimate)"
+   "note": "~24% projected roster rate (estimate)"
   },
   {
    "name": "Amon-Ra St. Brown",
@@ -66,9 +77,20 @@
    "opp": "GB",
    "game": "GB@DET",
    "proj": 20.7,
-   "own": 22.9,
+   "own": 23.0,
    "status": "Active",
    "note": "~23% projected roster rate (estimate)"
+  },
+  {
+   "name": "Bijan Robinson",
+   "team": "ATL",
+   "pos": "RB",
+   "opp": "SF",
+   "game": "SF@ATL",
+   "proj": 23.1,
+   "own": 21.8,
+   "status": "Active",
+   "note": "~22% projected roster rate (estimate)"
   },
   {
    "name": "Bucky Irving",
@@ -77,18 +99,7 @@
    "opp": "CAR",
    "game": "TB@CAR",
    "proj": 18.9,
-   "own": 22.5,
-   "status": "Active",
-   "note": "~22% projected roster rate (estimate)"
-  },
-  {
-   "name": "Bijan Robinson",
-   "team": "ATL",
-   "pos": "RB",
-   "opp": "SF",
-   "game": "SF@ATL",
-   "proj": 23.2,
-   "own": 22.4,
+   "own": 21.7,
    "status": "Active",
    "note": "~22% projected roster rate (estimate)"
   },
@@ -99,31 +110,9 @@
    "opp": "BAL",
    "game": "CIN@BAL",
    "proj": 20.3,
-   "own": 19.9,
+   "own": 20.0,
    "status": "Active",
    "note": "~20% projected roster rate (estimate)"
-  },
-  {
-   "name": "Chuba Hubbard",
-   "team": "CAR",
-   "pos": "RB",
-   "opp": "TB",
-   "game": "TB@CAR",
-   "proj": 19.3,
-   "own": 19.4,
-   "status": "Active",
-   "note": "~19% projected roster rate (estimate)"
-  },
-  {
-   "name": "Christian McCaffrey",
-   "team": "SF",
-   "pos": "RB",
-   "opp": "ATL",
-   "game": "SF@ATL",
-   "proj": 20.8,
-   "own": 19.1,
-   "status": "Active",
-   "note": "~19% projected roster rate (estimate)"
   },
   {
    "name": "Christian Watson",
@@ -132,7 +121,18 @@
    "opp": "DET",
    "game": "GB@DET",
    "proj": 18.4,
-   "own": 19.0,
+   "own": 19.2,
+   "status": "Active",
+   "note": "~19% projected roster rate (estimate)"
+  },
+  {
+   "name": "Chuba Hubbard",
+   "team": "CAR",
+   "pos": "RB",
+   "opp": "TB",
+   "game": "TB@CAR",
+   "proj": 19.2,
+   "own": 18.7,
    "status": "Active",
    "note": "~19% projected roster rate (estimate)"
   }
@@ -156,7 +156,7 @@
    "opp": "DET",
    "game": "GB@DET",
    "proj": 21.7,
-   "own": 10.3,
+   "own": 10.4,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -167,7 +167,7 @@
    "opp": "CAR",
    "game": "TB@CAR",
    "proj": 18.9,
-   "own": 22.5,
+   "own": 21.7,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -178,18 +178,18 @@
    "opp": "LV",
    "game": "LAR@LV",
    "proj": 21.6,
-   "own": 26.9,
+   "own": 26.3,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
   {
-   "name": "Jahmyr Gibbs",
-   "team": "DET",
+   "name": "Christian McCaffrey",
+   "team": "SF",
    "pos": "RB",
-   "opp": "GB",
-   "game": "GB@DET",
-   "proj": 28.6,
-   "own": 36.2,
+   "opp": "ATL",
+   "game": "SF@ATL",
+   "proj": 22.3,
+   "own": 24.8,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -199,7 +199,7 @@
    "pos": "WR",
    "opp": "LV",
    "game": "LAR@LV",
-   "proj": 27.4,
+   "proj": 27.5,
    "own": 55,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
@@ -211,7 +211,7 @@
    "opp": "DET",
    "game": "GB@DET",
    "proj": 17.8,
-   "own": 23.4,
+   "own": 23.6,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -233,7 +233,7 @@
    "opp": "GB",
    "game": "GB@DET",
    "proj": 20.7,
-   "own": 22.9,
+   "own": 23.0,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -243,8 +243,8 @@
    "pos": "TE",
    "opp": "ATL",
    "game": "SF@ATL",
-   "proj": 15.9,
-   "own": 15.4,
+   "proj": 16.0,
+   "own": 15.7,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -255,7 +255,7 @@
    "opp": "GB",
    "game": "GB@DET",
    "proj": 12.9,
-   "own": 10.3,
+   "own": 10.4,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
@@ -266,7 +266,7 @@
    "opp": "IND",
    "game": "IND@MIN",
    "proj": 10.5,
-   "own": 16.6,
+   "own": 17.0,
    "status": "",
    "note": "Optimal-lineup core: top projected value at the position"
   }
@@ -279,7 +279,7 @@
    "opp": "DET",
    "game": "GB@DET",
    "proj": 21.7,
-   "own": 10.3,
+   "own": 10.4,
    "status": "Active",
    "note": "Favorable matchup vs DET; team implied total 25.25"
   },
@@ -289,8 +289,8 @@
    "pos": "TE",
    "opp": "DET",
    "game": "GB@DET",
-   "proj": 12.0,
-   "own": 8.4,
+   "proj": 11.9,
+   "own": 8.2,
    "status": "Active",
    "note": "Favorable matchup vs DET; team implied total 25.25"
   },
@@ -323,7 +323,7 @@
    "opp": "DET",
    "game": "GB@DET",
    "proj": 18.4,
-   "own": 19.0,
+   "own": 19.2,
    "status": "Active",
    "note": "Favorable matchup vs DET; team implied total 25.25"
   },
@@ -334,7 +334,7 @@
    "opp": "DET",
    "game": "GB@DET",
    "proj": 17.8,
-   "own": 23.4,
+   "own": 23.6,
    "status": "Active",
    "note": "Favorable matchup vs DET; team implied total 25.25"
   },
@@ -345,7 +345,7 @@
    "opp": "LV",
    "game": "LAR@LV",
    "proj": 9.0,
-   "own": 5.4,
+   "own": 5.5,
    "status": "Active",
    "note": "Favorable matchup vs LV; team implied total 26.0"
   },
@@ -367,7 +367,7 @@
    "opp": "GB",
    "game": "GB@DET",
    "proj": 28.6,
-   "own": 36.2,
+   "own": 35.2,
    "status": "Active",
    "note": "Favorable matchup vs GB; team implied total 28.25"
   },
@@ -378,7 +378,7 @@
    "opp": "MIA",
    "game": "MIA@NYJ",
    "proj": 12.5,
-   "own": 5.5,
+   "own": 5.4,
    "status": "Active",
    "note": "Favorable matchup vs MIA; team implied total 21.5"
   },
@@ -389,7 +389,7 @@
    "opp": "CAR",
    "game": "TB@CAR",
    "proj": 18.9,
-   "own": 22.5,
+   "own": 21.7,
    "status": "Active",
    "note": "Favorable matchup vs CAR; team implied total 20.5"
   },
@@ -399,7 +399,7 @@
    "pos": "TE",
    "opp": "CIN",
    "game": "CIN@BAL",
-   "proj": 10.0,
+   "proj": 10.1,
    "own": 6.5,
    "status": "Active",
    "note": "Favorable matchup vs CIN; team implied total 27.0"
