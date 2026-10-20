@@ -1,8 +1,8 @@
 {
- "generated": "2026-10-20T07:51Z",
+ "generated": "2026-10-20T10:21Z",
  "slate": "sun",
  "slate_start": "2026-10-25T13:00:00.0000000",
- "source_fetched": "2026-10-20T07:50+00:00",
+ "source_fetched": "2026-10-20T10:20+00:00",
  "popular": [
   {
    "name": "Puka Nacua",
@@ -33,7 +33,7 @@
    "opp": "CIN",
    "game": "CIN@BAL",
    "proj": 20.0,
-   "own": 26.3,
+   "own": 26.4,
    "status": "Active",
    "note": "~26% projected roster rate (estimate)"
   },
@@ -110,7 +110,7 @@
    "opp": "BAL",
    "game": "CIN@BAL",
    "proj": 20.3,
-   "own": 19.8,
+   "own": 19.6,
    "status": "Active",
    "note": "~20% projected roster rate (estimate)"
   },
@@ -222,7 +222,7 @@
    "opp": "CIN",
    "game": "CIN@BAL",
    "proj": 20.0,
-   "own": 26.3,
+   "own": 26.4,
    "status": "Active",
    "note": "Optimal-lineup core: top projected value at the position"
   },
