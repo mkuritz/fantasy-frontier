@@ -320,5 +320,6 @@ function pFilm(m){const F=S.film;if(!F){m.innerHTML='<div class="note">Film Room
   <div class="grid two"><div><h4 style="margin:0 0 6px">Biggest value smashes</h4><div class="table-wrap"><table class="tight">${thd}<tbody>${W.smash.map(row).join('')}</tbody></table></div></div><div><h4 style="margin:0 0 6px">Top Book A scorers</h4><div class="table-wrap"><table class="tight">${thd}<tbody>${W.top.map(row).join('')}</tbody></table></div></div></div></div>`;
   m.querySelectorAll('[data-fw]').forEach(b=>b.onclick=()=>{S.fwk=+b.dataset.fw;route()});bindRows(m);}
 
+window.addEventListener('hashchange',()=>{if(!document.querySelector('.modal-bg'))route()});
 load();
 })();
