@@ -67,3 +67,9 @@ tr.out td{opacity:.45}
 .bld-list>.bld-opt{flex-shrink:0}
 .bld-opt .pl>span:last-child{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
 .bld-opt .pl .pos-tag{flex:0 0 auto}
+/* mobile nav polish */
+html{-webkit-text-size-adjust:100%}
+button,a,.nav-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.nav-btn{min-height:44px}
+.slate-seg button,.menu-btn{min-height:44px}
+@media (max-width:900px){body{overflow-x:hidden}.main{overflow-x:hidden;max-width:100vw}}
