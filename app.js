@@ -242,6 +242,9 @@ function pGames(m){const s=sl();m.innerHTML=staleNote()+`<div class="gm">${s.gam
   <div style="margin-top:8px">${P.map(p=>`<span class="chip" data-pid="${p.id}" style="cursor:pointer">${esc(p.name.split(' ').slice(-1)[0])} ${f1(p.proj)}</span>`).join('')}</div></div>`}).join('')}</div>`;bindRows(m);}
 function accCard(){return ''}
 function pMethod(m){m.innerHTML=`<div class="card"><div class="card-head"><h2>About Fantasy Frontier</h2></div><p>Fantasy Frontier projects every DFS player from his role, matchup and the betting lines, then builds lineups from those projections. Estimates only. 21+.</p></div>`}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.modal-bg'))history.back()});
+const SLOTS=()=>isSD()?['CPT','FLEX','FLEX','FLEX','FLEX','FLEX']:['QB','RB','RB','WR','WR','WR','TE','FLEX','DST'];
+const fits=(slot,p)=>slot==='CPT'||(slot==='FLEX'?(isSD()?true:'RB WR TE'.includes(p.pos)):p.pos===slot);
 function bslots(){const k=lockK();S.bld=S.bld||ls.get('bld',{});const sl_=SLOTS();let a=(S.bld[k]||[]).slice(0,sl_.length);while(a.length<sl_.length)a.push(null);
   const L=locks();const byId=Object.fromEntries(pool().map(p=>[p.id,p]));a=a.map(id=>id&&L[id]&&byId[id]?id:null);
   for(const id of Object.keys(L)){if(a.includes(id)||!byId[id])continue;const p=byId[id];let i=sl_.findIndex((s,j)=>!a[j]&&s===p.pos);if(i<0)i=sl_.findIndex((s,j)=>!a[j]&&s!=='CPT'&&fits(s,p));if(i<0)i=sl_.findIndex((s,j)=>!a[j]&&fits(s,p));if(i>=0)a[i]=id;}
