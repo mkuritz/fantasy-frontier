@@ -23,7 +23,7 @@ function betlab(k){var s=S.filter(function(x){return x.k===k||x.bl===k})[0];retu
 S.forEach(function(s){s.url=s.host?H(s.host):betlab(s.k);s.blurl=betlab(s.k)});
 var T=[{icon:'💎',name:'Bet Lab',url:BL},{icon:'⚡',name:'Arb Lab',url:H('arblab')},{icon:'🎯',name:'Fantasy Frontier',url:H('fantasyfrontier')},{icon:'🏆',name:'Fantasy Front Office',url:H('frontoffice')},{icon:'🧢',name:'GM Hubs',url:'https://sportslabshq.com/gm-hub.html'},{icon:'🧭',name:'SportsLabs HQ',url:H('hq')},{icon:'🏠',name:'Sports Labs home',url:'https://sportslabshq.com/'}];
 var hn=location.hostname,sub=(hn.match(/betlab|nfllab|cfblab|cbblab|nhllab|mlblab|soccerlab/)||[hn.split('.')[0]])[0],q=new URLSearchParams(location.search);
-var cur=(S.filter(function(s){return s.host===sub})[0]||{}).k||null;
+var cur=(S.filter(function(s){return s.host===sub||s.k===sub})[0]||{}).k||null;
 if(q.get('sls'))cur=q.get('sls'); /* local/preview testing: ?sls=nfl */
 var onBL=sub==='betlab'||q.get('slsbl')==='1';
 function blCur(){var m=location.hash.match(/[#&]sport=(\w+)/);return m?m[1]:null}

@@ -18,7 +18,7 @@
 .lu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:14px}
 .lu{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;min-width:0}
 .lu h3{margin:0 0 2px;font-size:15px}.lu .sub{color:var(--text-3);font-size:12px;margin-bottom:10px}
-.lu-row{display:grid;grid-template-columns:44px 1fr 58px 46px;gap:6px;align-items:center;padding:5px 0;border-top:1px solid var(--border);font-size:13px}
+.lu-row{display:grid;grid-template-columns:42px 1fr 52px 104px;gap:6px;align-items:center;padding:5px 0;border-top:1px solid var(--border);font-size:13px}
 .lu-row .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lu-foot{display:grid;grid-template-columns:1fr 1fr;margin-top:8px;font-size:12.5px;color:var(--text-2);flex-wrap:wrap;gap:6px}
 .lu.safe{border-top:3px solid var(--pos)}.lu.bal{border-top:3px solid var(--accent-2)}.lu.up{border-top:3px solid var(--accent)}
@@ -41,7 +41,7 @@ tr.out td{opacity:.45}
 .modal{background:var(--bg-2);border:1px solid var(--border-strong);border-radius:14px;max-width:560px;width:100%;max-height:88vh;overflow:auto;padding:18px}
 .spark{display:flex;gap:3px;align-items:flex-end;height:40px}.spark i{width:14px;background:var(--accent-2);border-radius:2px 2px 0 0;opacity:.8}
 .busy{opacity:.6;pointer-events:none}
-@media(max-width:960px){.slate-seg button{padding:6px 7px}.slate-seg button .s{display:none}.hide-m{display:none}.lu-row{grid-template-columns:40px 1fr 52px 40px}}
+@media(max-width:960px){.slate-seg button{padding:6px 7px}.slate-seg button .s{display:none}.hide-m{display:none}.lu-row{grid-template-columns:38px 1fr 48px 96px}}
 /* Lineup Builder */
 .bld-wrap{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px}
 .bld-roster{display:flex;flex-direction:column;gap:6px}
@@ -79,3 +79,18 @@ button,a,.nav-btn{touch-action:manipulation;-webkit-tap-highlight-color:transpar
 .lu-sim-bar .chip{margin:0;font-size:11px;padding:2px 7px;line-height:1.35}
 .chip.pos-chip{background:rgba(74,222,128,.13);color:var(--pos);border:1px solid rgba(74,222,128,.28)}
 .chip.stack-chip{background:rgba(167,139,250,.14);color:#c4b5fd;border:1px solid rgba(167,139,250,.28)}
+
+/* 1,000-Sim Outcome Bell Curve & Floor-Median-Ceiling Whisker Bars */
+.sim-bell-wrap{background:rgba(10,13,24,.58);border:1px solid var(--border);border-radius:9px;padding:6px 8px 4px;margin:0 0 10px}
+.sim-bell-hd{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;font-size:10.5px}
+.sim-bell-ttl{color:var(--text-3);font-weight:600;letter-spacing:.02em;text-transform:uppercase;font-size:10px}
+.sim-bell-zones{display:inline-flex;gap:8px;align-items:center;font-weight:600}
+.sim-bell-zones .z-cash{color:#38bdf8}
+.sim-bell-zones .z-top1{color:#4ade80}
+.sim-bell-svg{display:block;width:100%;height:auto;overflow:visible}
+.ff-whisker{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end;white-space:nowrap}
+.ff-whisker.compact{gap:3px}
+.whisker-svg{display:inline-block;vertical-align:middle;flex-shrink:0}
+.whisker-nums{font-size:11px;color:var(--text-2)}
+.whisker-nums .fl{color:var(--text-3)}
+.whisker-nums .cl{color:var(--pos)}
