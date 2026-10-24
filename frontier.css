@@ -73,3 +73,9 @@ button,a,.nav-btn{touch-action:manipulation;-webkit-tap-highlight-color:transpar
 .nav-btn{min-height:44px}
 .slate-seg button,.menu-btn{min-height:44px}
 @media (max-width:900px){body{overflow-x:hidden}.main{overflow-x:hidden;max-width:100vw}}
+
+/* 1,000-Run Monte Carlo Contest Sim & Leverage Badges */
+.lu-sim-bar{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 10px;padding:7px 8px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:8px}
+.lu-sim-bar .chip{margin:0;font-size:11px;padding:2px 7px;line-height:1.35}
+.chip.pos-chip{background:rgba(74,222,128,.13);color:var(--pos);border:1px solid rgba(74,222,128,.28)}
+.chip.stack-chip{background:rgba(167,139,250,.14);color:#c4b5fd;border:1px solid rgba(167,139,250,.28)}

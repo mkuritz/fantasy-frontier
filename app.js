@@ -54,12 +54,102 @@ function slDate(s){const d=new Date(s.start+'-04:00');return d.toLocaleString([]
 const pool=()=>sl().players.filter(p=>p.sal);const elig=()=>pool().filter(p=>p.elig);
 const posTag=p=>`<span class="pos-tag pos-${p}">${p}</span>`;
 const plCell=p=>`<span class="pl">${posTag(p.pos)}<span><b>${esc(p.name)}</b>${p.shot?' <span class="chip hot" style="font-size:10px">their shot</span>':''} <span class="t">${esc(p.team)} ${p.opp?'v '+esc(p.opp):''}${p.status&&p.status!=='Active'?` · <span style="color:var(--warn)">${esc(p.status)}</span>`:''}</span></span></span>`;
+const boomPct=p=>{if(p.boom!=null)return +p.boom;if(!p.elig||p.proj<=0.5)return 0;const sk=(p.sal||3000)/1000,sh=isSD();const thr=sh?Math.max(13,3*sk):(p.pos==='QB'?Math.max(24.5,3.65*sk):p.pos==='DST'?Math.max(12.5,3.2*sk):Math.max(14,3.25*sk));const sd=Math.max(1.5,p.sd||((p.ceil-p.floor)/2.12)||4);const z=(thr-p.proj)/sd;const pn=1/(1+Math.exp(1.702*z));const sm=p.sims||[];const pe=sm.length?sm.filter(x=>x>=thr).length/sm.length:pn;return Math.round(Math.min(92,Math.max(0.5,(0.6*pe+0.4*pn)*100))*10)/10};
+const levDiff=p=>p.lev_diff!=null?+p.lev_diff:Math.round((boomPct(p)-(p.own||0))*10)/10;
 const lev=p=>Math.round((p.ceil/Math.max(1,(p.own||0)+3))*10)/10;
+function ensureSim1000(){
+  const k=lockK();S._sim1k=S._sim1k||{};if(S._sim1k[k])return S._sim1k[k];
+  const s=sl();if(!s)return null;const P=pool();const NSIM=1000;
+  let seed=Math.abs(parseInt(String(s.dg||'20261024').replace(/\D/g,''),10)||20261024)%2147483647||1337;
+  const rnd=()=>{seed=(seed*48271)%2147483647;return (seed-1)/2147483646};
+  const rnorm=()=>{const u=Math.max(1e-7,rnd()),v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(6.2831853*v)};
+  const gms=[...new Set(P.map(p=>p.game))];const tms=[...new Set(P.map(p=>p.team))];
+  const gZ={},pZ={},rZ={};
+  gms.forEach(g=>{const a=new Float32Array(NSIM);for(let i=0;i<NSIM;i++)a[i]=rnorm();gZ[g]=a});
+  tms.forEach(t=>{const a=new Float32Array(NSIM),b=new Float32Array(NSIM);for(let i=0;i<NSIM;i++){a[i]=rnorm();b[i]=rnorm()}pZ[t]=a;rZ[t]=b});
+  const mat={};
+  P.forEach(p=>{
+    const arr=new Float32Array(NSIM);const sm=p.sims||[];const K=sm.length;
+    const sd=Math.max(1.2,p.sd||((p.ceil-p.floor)/2.12)||3.5);const mu=p.proj||0;
+    const gz=gZ[p.game]||new Float32Array(NSIM),pz=pZ[p.team]||new Float32Array(NSIM),rz=rZ[p.team]||new Float32Array(NSIM),opz=pZ[p.opp]||new Float32Array(NSIM);
+    const isQ=p.pos==='QB',isP=p.pos==='WR'||p.pos==='TE',isR=p.pos==='RB',isD=p.pos==='DST';
+    for(let i=0;i<NSIM;i++){
+      const z=isQ?(0.36*gz[i]+0.52*pz[i]+0.77*rnorm()):isP?(0.34*gz[i]+0.44*pz[i]+0.16*opz[i]+0.81*rnorm()):isR?(0.20*gz[i]+0.42*rz[i]-0.12*opz[i]+0.88*rnorm()):isD?(-0.28*gz[i]+0.35*rz[i]-0.38*opz[i]+0.85*rnorm()):(0.25*gz[i]+0.96*rnorm());
+      const c=Math.max(0,mu+sd*z);
+      arr[i]=K>0?(0.55*sm[i%K]+0.45*c):c;
+    }
+    mat[p.id]=arr;
+  });
+  const sd=isSD();const el=P.filter(p=>p.elig&&p.proj>0);
+  const cashLine=new Float32Array(NSIM),top1Line=new Float32Array(NSIM);
+  const wSum=el.reduce((a,p)=>a+Math.max(1,p.own||2),0)||1;
+  const slots=sd?6.75:9.0;
+  for(let i=0;i<NSIM;i++){
+    let m1=0,m2=0;
+    for(let j=0;j<el.length;j++){const p=el[j],w=Math.max(1,p.own||2)/wSum,v=mat[p.id][i];m1+=w*v;m2+=w*v*v}
+    const vp=Math.max(4,m2-m1*m1);
+    const fMean=m1*slots,fSd=Math.sqrt(vp*slots)*1.12;
+    cashLine[i]=fMean+0.06*fSd;
+    top1Line[i]=fMean+2.05*fSd;
+  }
+  return S._sim1k[k]={NSIM,mat,cashLine,top1Line};
+}
+function scoreLineupMC(rows){
+  const sim=ensureSim1000();if(!sim||!rows||!rows.length)return {sim_cash:50,sim_top1:1.5,lev_score:0,avg_boom:0,stack_badge:'Balanced Build • ρ +0.18',stack_rho:0.18};
+  const {NSIM,mat,cashLine,top1Line}=sim;
+  let cashHits=0,top1Hits=0;
+  const luScores=new Float32Array(NSIM);
+  for(let i=0;i<NSIM;i++){
+    let tot=0;
+    for(let j=0;j<rows.length;j++){const r=rows[j],m=r.slot==='CPT'?1.5:1,a=mat[r.p.id];if(a)tot+=m*a[i];else tot+=r.pts||0}
+    luScores[i]=tot;
+    if(tot>=cashLine[i])cashHits+=1;
+    else if(tot>=cashLine[i]-3.5)cashHits+=0.35;
+    if(tot>=top1Line[i])top1Hits+=1;
+    else if(tot>=top1Line[i]-5.0)top1Hits+=0.22;
+  }
+  const avgBoom=rows.reduce((a,r)=>a+boomPct(r.p),0)/rows.length;
+  const levScore=rows.reduce((a,r)=>a+levDiff(r.p),0)/rows.length;
+  // Compute empirical stack correlation rho across the 1,000 draws
+  const sd=isSD();
+  const corr=(a,b)=>{if(!a||!b)return 0.18;let ma=0,mb=0;for(let i=0;i<NSIM;i++){ma+=a[i];mb+=b[i]}ma/=NSIM;mb/=NSIM;let num=0,da=0,db=0;for(let i=0;i<NSIM;i++){const xa=a[i]-ma,xb=b[i]-mb;num+=xa*xb;da+=xa*xa;db+=xb*xb}return (da>0&&db>0)?num/Math.sqrt(da*db):0.18};
+  let stackDesc='Uncorrelated Cash Build',rho=0.12;
+  if(sd){
+    const cpt=rows[0]?.p;const mates=rows.slice(1).filter(r=>cpt&&(r.p.team===cpt.team||r.p.team===cpt.opp));
+    const tc={};rows.forEach(r=>tc[r.p.team]=(tc[r.p.team]||0)+1);
+    const cnts=Object.entries(tc).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`${n} ${t}`).join('-');
+    if(cpt&&mates.length){
+      const rhos=mates.slice(0,3).map(m=>Math.abs(corr(mat[cpt.id],mat[m.p.id])));
+      rho=Math.max(0.21,Math.min(0.58,(rhos.reduce((a,b)=>a+b,0)/rhos.length)*1.15));
+    }
+    stackDesc=`CPT ${cpt?cpt.pos:''} (${cnts} Script)`;
+  }else{
+    const qb=rows.find(r=>r.p.pos==='QB')?.p;
+    const stackMates=qb?rows.filter(r=>r.p.team===qb.team&&r.p.id!==qb.id&&'WR TE RB'.includes(r.p.pos)):[];
+    const bringBacks=qb?rows.filter(r=>r.p.team===qb.opp&&'WR TE RB'.includes(r.p.pos)):[];
+    if(qb&&stackMates.length){
+      const linked=[...stackMates,...bringBacks];
+      const rhos=linked.map(m=>corr(mat[qb.id],mat[m.p.id]));
+      rho=Math.max(0.24,Math.min(0.54,(rhos.reduce((a,b)=>a+b,0)/rhos.length)*1.28+(bringBacks.length?0.05:0)));
+      const posStr=stackMates.length===1?`1 ${stackMates[0].p.pos}`:`${stackMates.length} Pass-Catchers`;
+      stackDesc=`QB+${posStr}`+(bringBacks.length?` + Opposing Bring-Back`:'');
+    }else{
+      // Check mini game stack
+      const byG={};rows.forEach(r=>{if(r.p.pos!=='DST')(byG[r.p.game]=byG[r.p.game]||[]).push(r.p)});
+      const topG=Object.values(byG).sort((a,b)=>b.length-a.length)[0]||[];
+      if(topG.length>=2){rho=Math.max(0.18,Math.min(0.38,Math.abs(corr(mat[topG[0].id],mat[topG[1].id]))*1.25));stackDesc=`${topG.length}-Man Game Mini-Stack`}
+    }
+  }
+  const sim_cash=Math.min(84.5,Math.max(22.0,Math.round((cashHits/NSIM)*1000)/10));
+  const sim_top1=Math.min(18.5,Math.max(0.4,Math.round((top1Hits/NSIM)*1000)/10+(levScore>8?0.8:0)+(rho>=0.3?0.6:0)));
+  const rhoStr=(rho>=0?'+':'')+rho.toFixed(2);
+  return {sim_cash,sim_top1:Math.round(sim_top1*10)/10,lev_score:Math.round(levScore*10)/10,avg_boom:Math.round(avgBoom*10)/10,stack_badge:`${stackDesc} • ρ ${rhoStr}`,stack_rho:rho};
+}
 function openPlayer(id){const p=pool().find(x=>x.id===id);if(!p)return;const mx=Math.max(1,...(p.log||[1]));
   const st=p.st||{};const statl=p.pos==='DST'?`Opp implied ${f1(st.oitt)} · ${f1(st.sk)} sacks/g · ${f1(st.to)} takeaways/g`:p.pos==='K'?'':
    [st.py?`${st.py} pass yds, ${f1(st.ptd)} pass TD`:'',st.car?`${f1(st.car)} car, ${f1(st.ry)} rush yds`:'',st.tgt?`${f1(st.tgt)} tgt, ${f1(st.rec)} rec, ${f1(st.recy)} rec yds`:'',st.td?`${(+st.td).toFixed(2)} expected TDs`:''].filter(Boolean).join(' · ');
   const bg=document.createElement('div');bg.className='modal-bg';bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div>${plCell(p)}</div><button class="btn sm" id="mx">← Back</button></div>
-  <div class="grid kpis" style="margin-top:12px;grid-template-columns:repeat(4,1fr)"><div><div class="kpi-label">Salary</div><b class="mono">${fmt$(p.sal)}</b>${p.csal?`<div class="t" style="font-size:11px;color:var(--text-3)">CPT ${fmt$(p.csal)}</div>`:''}</div><div><div class="kpi-label">Proj<span class="est">est</span></div><b class="mono">${f1(p.proj)}</b></div><div><div class="kpi-label">Floor / Ceil</div><b class="mono">${f1(p.floor)} / ${f1(p.ceil)}</b></div><div><div class="kpi-label">Own proxy</div><b class="mono">${f1(p.own)}%</b></div></div>
+  <div class="grid kpis" style="margin-top:12px;grid-template-columns:repeat(auto-fit,minmax(95px,1fr))"><div><div class="kpi-label">Salary</div><b class="mono">${fmt$(p.sal)}</b>${p.csal?`<div class="t" style="font-size:11px;color:var(--text-3)">CPT ${fmt$(p.csal)}</div>`:''}</div><div><div class="kpi-label">Proj<span class="est">est</span></div><b class="mono">${f1(p.proj)}</b></div><div><div class="kpi-label">Floor / Ceil</div><b class="mono">${f1(p.floor)} / ${f1(p.ceil)}</b></div><div><div class="kpi-label">Boom % (3x+)</div><b class="mono" style="color:var(--accent)">${f1(boomPct(p))}%</b></div><div><div class="kpi-label">Own proxy</div><b class="mono">${f1(p.own)}%</b></div><div><div class="kpi-label">Leverage</div><b class="mono" style="color:${levDiff(p)>=0?'var(--pos)':'var(--neg)'}">${levDiff(p)>0?'+':''}${f1(levDiff(p))}%</b></div></div>
   ${statl?`<p style="color:var(--text-2);font-size:13px;margin:12px 0 4px">Projected line: ${esc(statl)}</p>`:''}
   ${p.smash?`<p style="font-size:12.5px;color:var(--text-2);margin:4px 0">Smash likelihood (4x+ value): <b>${f1(p.smash.p)}%</b> <span class="est">estimate · info only</span>${p.smash.f.length?' · '+p.smash.f.map(esc).join(' · '):''} · <a href="#film">Film Room</a></p>`:''}
   ${p.why_not?`<p class="note warn">Not highlighted: ${esc(p.why_not)}</p>`:''}${(p.flags||[]).map(f=>`<span class="chip ${f.startsWith('Expanding')?'hot':''}">${esc(f)}</span>`).join('')}${usageTbl(p)}
@@ -141,7 +231,8 @@ function buildLineup(ids){const P=pool();const byId=Object.fromEntries(P.map(p=>
 function finish(rows,ids){const sum=k=>rows.reduce((a,r)=>a+(r[k]||0),0);const proj=sum('pts');
   // lineup range: player outcomes combined (sqrt of summed variances, +20% for in-game correlation), not a sum of individual floors/ceilings
   const sd=Math.sqrt(rows.reduce((a,r)=>{const m=r.slot==='CPT'?1.5:1;const s=(r.p.sd||((r.p.ceil-r.p.floor)/2.1))*m;return a+s*s},0))*1.2;
-  return {rows,ids,sal:sum('sal'),proj,floor:Math.max(0,proj-0.84*sd),ceil:proj+1.28*sd,own:sum('own')};}
+  const mc=scoreLineupMC(rows);
+  return Object.assign({rows,ids,sal:sum('sal'),proj,floor:Math.max(0,proj-0.84*sd),ceil:proj+1.28*sd,own:sum('own')},mc);}
 function optimize(cfg,n,prev0){const players=prune(pool(),cfg,isSD());const prev=prev0||[],out=[],exp={};
   for(let i=0;i<n;i++){const ids=solveOne(players,cfg,prev,exp,n);if(!ids)break;prev.push(ids);const lu=buildLineup(ids);out.push(lu);lu.rows.forEach(r=>exp[r.p.id]=(exp[r.p.id]||0)+1);}
   return out;}
@@ -152,8 +243,8 @@ function why(lu,kind){const r=lu.rows;const qb=r.find(x=>x.p.pos==='QB'&&x.slot!
     if(st.length)out.push(`Stack: ${qb.p.name} + ${st.join(', ')}`+(bb.length?` with bring-back ${bb.join(', ')}`:''));}
   const vals=r.filter(x=>x.p.sal<=5000&&x.p.pos!=='DST').sort((a,b)=>b.p.val-a.p.val).slice(0,2);if(vals.length)out.push('Salary savers: '+vals.map(x=>`${x.p.name} (${fmt$(x.p.sal)}, ${x.p.val} pts/$1k)`).join(', '));
   return out;}
-function luCard(lu,cls,title,sub,kind){return `<div class="lu ${cls}"><h3>${esc(title)}</h3><div class="sub">${esc(sub)}</div>${lu.rows.map(r=>`<div class="lu-row" data-pid="${r.p.id}" style="cursor:pointer"><span>${posTag(r.slot==='CPT'?'CPT':r.slot)}</span><span class="n"><b>${esc(r.p.name)}</b> <span style="color:var(--text-3);font-size:11.5px">${esc(r.p.team)} ${r.slot!==r.p.pos&&r.slot!=='DST'?esc(r.p.pos):''}</span></span><span class="mono" style="text-align:right">${fmt$(r.sal)}</span><span class="mono" style="text-align:right">${f1(r.pts)}</span></div>`).join('')}
-  <div class="lu-foot"><span>Salary <b class="mono">${fmt$(lu.sal)}</b> / $50k</span><span>Proj <b class="mono">${f1(lu.proj)}</b></span><span>Floor–Ceil <b class="mono">${f1(lu.floor)}–${f1(lu.ceil)}</b></span><span>Total own* <b class="mono">${Math.round(lu.own)}%</b></span></div>
+function luCard(lu,cls,title,sub,kind){return `<div class="lu ${cls}"><h3>${esc(title)}</h3><div class="sub">${esc(sub)}</div><div class="lu-sim-bar"><span class="chip hot" title="1,000-draw correlated Monte Carlo contest simulation Top-1% finish rate">🏆 Sim Top-1%: <b>${f1(lu.sim_top1)}%</b></span><span class="chip cool" title="Top-50% cash rate across 1,000 correlated slate draws">💵 Cash %: <b>${f1(lu.sim_cash)}%</b></span><span class="chip ${lu.lev_score>=0?'pos-chip':''}" title="Lineup average Leverage Score (Boom % − Est. Own %)">⚡ Leverage: <b>${lu.lev_score>0?'+':''}${f1(lu.lev_score)}%</b></span><span class="chip stack-chip" title="Stack structure & empirical pairwise correlation across 1,000 game-script draws">🔗 ${esc(lu.stack_badge||'Balanced Stack')}</span></div>${lu.rows.map(r=>`<div class="lu-row" data-pid="${r.p.id}" style="cursor:pointer"><span>${posTag(r.slot==='CPT'?'CPT':r.slot)}</span><span class="n"><b>${esc(r.p.name)}</b> <span style="color:var(--text-3);font-size:11.5px">${esc(r.p.team)} ${r.slot!==r.p.pos&&r.slot!=='DST'?esc(r.p.pos):''} · <span title="Boom % / Est. Own %">B:${Math.round(boomPct(r.p))}% O:${Math.round(r.p.own||0)}%</span></span></span><span class="mono" style="text-align:right">${fmt$(r.sal)}</span><span class="mono" style="text-align:right">${f1(r.pts)}</span></div>`).join('')}
+  <div class="lu-foot"><span>Salary <b class="mono">${fmt$(lu.sal)}</b> / $50k</span><span>Proj <b class="mono">${f1(lu.proj)}</b></span><span>Floor–Ceil <b class="mono">${f1(lu.floor)}–${f1(lu.ceil)}</b></span><span>Total own* <b class="mono">${Math.round(lu.own)}%</b> · Boom <b class="mono">${f1(lu.avg_boom)}%</b></span></div>
   <ul class="edge-list">${why(lu,kind).map(w=>`<li>${esc(w)}</li>`).join('')}</ul></div>`;}
 function recs(){const k=lockK();if(S.rec[k])return S.rec[k];const sd=isSD();
   const base={n:1,exp:100,uniq:1,minsal:sd?46000:48500,script:'any'};
@@ -169,34 +260,34 @@ function recBlock(){const r=recs();const sd=isSD();if(!r.safe)return '<p>Not eno
 function pSlate(m){const s=sl(),P=elig().filter(p=>p.proj>0);const sd=isSD();
   const topEdge=[...P].filter(p=>(p.edges||[]).length&&p.pos!=='DST').sort((a,b)=>(b.ceil-b.proj)/b.sal*1e3+b.val-((a.ceil-a.proj)/a.sal*1e3+a.val)).slice(0,6);
   const bargains=P.filter(p=>p.sal<=5000&&p.pos!=='DST'&&p.pos!=='K').sort((a,b)=>b.val-a.val).slice(0,6);
-  const lev_=P.filter(p=>p.proj>=8).sort((a,b)=>lev(b)-lev(a)).slice(0,5);
+  const lev_=P.filter(p=>p.proj>=8).sort((a,b)=>levDiff(b)-levDiff(a)).slice(0,5);
   m.innerHTML=staleNote()+`<div class="hero-ff"><div><h2>${esc(KINDS[S.kind])} · ${sd?esc(s.games[0]?s.games[0].key:'Showdown'):s.games.length+'-game main slate'}</h2><p>${sd?'Showdown: 1 Captain at 1.5x salary and points, plus 5 FLEX, under a $50k cap. Treat it like a same-game parlay: pick the game script first, then the captain.':'Classic: QB, 2 RB, 3 WR, TE, FLEX, DST under a $50k cap. DK PPR scoring with 3-point bonuses at 300 passing, 100 rushing and 100 receiving yards.'} ${esc(slDate(s))}.</p></div>
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn primary" id="fillgo">⚡ Fill slots & go</button><a class="btn" href="#optimizer">Optimizer</a><a class="btn" href="#lineups">All lineups</a></div></div>
   <div class="grid kpis" style="margin-bottom:16px">${[['Players',P.length],['Games',s.games.length],['Top projection',P[0]?P[0].name.split(' ').slice(-1)[0]+' '+f1(P[0].proj):'–'],['Best value',[...P].filter(p=>p.proj>=8).sort((a,b)=>b.val-a.val)[0]?.name||'–'],['Injury cascades',(s.cascades||[]).length]].map(([l,v])=>`<div class="card kpi"><div class="kpi-label">${l}</div><div class="kpi-value" style="font-size:20px">${esc(v)}</div></div>`).join('')}</div>
   ${sd?cptBlock():''}<div class="card" style="margin-bottom:16px"><div class="card-head"><h2>Highlighted lineups <span class="est">estimates</span></h2><span class="sub">Safe for cash, Balanced, Upside for GPP</span></div>${recBlock()}</div>
   <div class="grid two" style="margin-bottom:16px"><div class="card"><div class="card-head"><h2>Biggest edges</h2><span class="sub">why they could outperform</span></div>${topEdge.map(p=>`<div data-pid="${p.id}" style="cursor:pointer;padding:8px 0;border-top:1px solid var(--border)">${plCell(p)} <span class="mono" style="float:right">${fmt$(p.sal)} · ${f1(p.proj)}</span><ul class="edge-list">${p.edges.slice(0,3).map(e=>`<li>${esc(e)}</li>`).join('')}</ul></div>`).join('')}</div>
-  <div class="card"><div class="card-head"><h2>Bargains under $5k</h2><a href="#value" class="sub">all value plays →</a></div>${tbl(bargains,['sal','proj','val','own'])}<div class="card-head" style="margin-top:14px"><h2>Leverage plays</h2><span class="sub">high ceiling, low est. ownership</span></div>${tbl(lev_,['sal','ceil','own','lev'])}</div></div>
+  <div class="card"><div class="card-head"><h2>Bargains under $5k</h2><a href="#value" class="sub">all value plays →</a></div>${tbl(bargains,['sal','proj','val','own'])}<div class="card-head" style="margin-top:14px"><h2>Leverage plays</h2><span class="sub">Boom % minus Est. Ownership %</span></div>${tbl(lev_,['sal','boom','own','levd'])}</div></div>
   ${shotCard()}${(s.cascades||[]).length?`<div class="card"><div class="card-head"><h2>Injury cascades</h2><span class="sub">vacated share split across healthy teammates (with/without splits, same-position priority)</span></div>${s.cascades.map(c=>`<div style="padding:6px 0;border-top:1px solid var(--border);font-size:13px"><b>${esc(c.team)}: ${esc(c.out)} (${esc(c.pos)}) out</b>, ${c.vac}% ${esc(c.kind)} share vacated → ${(c.to||[]).map(t=>`<span class="chip hot">${esc(t[0])} +${t[1]}%</span>`).join('')}</div>`).join('')}</div>`:''}`;
   bindRows(m);$('#fillgo').onclick=fillGo;}
 function shotCard(){const a=elig().filter(p=>p.shot).sort((x,y)=>x.sal-y.sal);if(!a.length)return '';return `<div class="card" style="margin-bottom:16px"><div class="card-head"><h2>🎯 Their shot</h2><span class="sub">a role just opened up (teammate out or depth-chart news), backed by with/without splits. Cheapest first</span></div>${a.slice(0,8).map(p=>`<div data-pid="${p.id}" style="cursor:pointer;padding:8px 0;border-top:1px solid var(--border)">${plCell(p)} <span class="mono" style="float:right">${fmt$(p.sal)} · ${f1(p.proj)}</span><ul class="edge-list">${p.shot.why.slice(0,3).map(w=>`<li>${esc(w)}</li>`).join('')}</ul></div>`).join('')}</div>`;}
 function fillGo(){S.autoGo=1;if(location.hash==='#optimizer')route();else location.hash='optimizer';}
 function cptBlock(){const c=sl().cpt||[];if(!c.length)return '';const byId=Object.fromEntries(pool().map(p=>[p.id,p]));return `<div class="card" style="margin-bottom:16px"><div class="card-head"><h2>Captain rankings <span class="est">sim-based</span></h2><span class="sub">1.5x points · how often he's the game's top scorer across ${sl().nsims||4000} simulations</span></div><div class="table-wrap"><table class="tight"><thead><tr><th>#</th><th>Captain</th><th class="num">CPT $</th><th class="num">CPT proj</th><th class="num">CPT ceil</th><th class="num">Top scorer</th><th class="num">Pts/$1k</th></tr></thead><tbody>${c.slice(0,8).map((x,i)=>`<tr data-pid="${x.id}" style="cursor:pointer"><td>${i+1}</td><td>${byId[x.id]?plCell(byId[x.id]):esc(x.name)}</td><td class="num">${fmt$(x.csal)}</td><td class="num">${f1(x.proj)}</td><td class="num">${f1(x.ceil)}</td><td class="num">${f1(x.top)}%</td><td class="num">${f1(x.val)}</td></tr>`).join('')}</tbody></table></div></div>`;}
-const COLS={src:['Src agree',p=>p.srcs&&p.srcs.agree!=null?p.srcs.agree+'%'+((p.flags||[]).includes('Sources disagree')?' ⚠️':''):'–'],sal:['Salary',p=>fmt$(p.sal)],csal:['CPT $',p=>p.csal?fmt$(p.csal):'–'],proj:['Proj',p=>f1(p.proj)],floor:['Floor',p=>f1(p.floor)],ceil:['Ceil',p=>f1(p.ceil)],val:['Pts/$1k',p=>f1(p.val)],own:['Own*',p=>f1(p.own)+'%'],lev:['Lev',p=>f1(lev(p))],smash:['Smash%',p=>p.smash?f1(p.smash.p)+'%':'–']};
+const COLS={src:['Src agree',p=>p.srcs&&p.srcs.agree!=null?p.srcs.agree+'%'+((p.flags||[]).includes('Sources disagree')?' ⚠️':''):'–'],sal:['Salary',p=>fmt$(p.sal)],csal:['CPT $',p=>p.csal?fmt$(p.csal):'–'],proj:['Proj',p=>f1(p.proj)],floor:['Floor',p=>f1(p.floor)],ceil:['Ceil',p=>f1(p.ceil)],val:['Pts/$1k',p=>f1(p.val)],boom:['Boom%',p=>`<span style="color:${boomPct(p)>=35?'var(--accent)':'inherit'};font-weight:${boomPct(p)>=35?600:400}">${f1(boomPct(p))}%</span>`],own:['Own*',p=>f1(p.own)+'%'],levd:['Leverage',p=>{const d=levDiff(p);return `<span style="color:${d>=8?'var(--pos)':d<=-5?'var(--neg)':'inherit'};font-weight:${Math.abs(d)>=8?600:400}">${d>0?'+':''}${f1(d)}%</span>`}],lev:['Lev',p=>f1(lev(p))],smash:['Smash%',p=>p.smash?f1(p.smash.p)+'%':'–']};
 function tbl(arr,cols,ctl){return `<div class="table-wrap"><table class="tight"><thead><tr><th>Player</th>${cols.map(c=>`<th class="num ${ctl?'sortable':''}" data-s="${c}">${COLS[c][0]}</th>`).join('')}${ctl?'<th>Opt</th>':''}</tr></thead><tbody>${arr.map(p=>`<tr data-pid="${p.id}" class="${(p.proj<=0||!p.elig)?'out':''}" title="${esc(p.why_not||'')}" style="cursor:pointer"><td>${plCell(p)}</td>${cols.map(c=>`<td class="num">${COLS[c][1](p)}</td>`).join('')}${ctl?`<td style="white-space:nowrap"><button class="lk ${locks()[p.id]?'on':''}" data-lk="${p.id}" data-kd="lock">Lock</button> <button class="lk ex ${excls()[p.id]?'on':''}" data-lk="${p.id}" data-kd="excl">✕</button></td>`:''}</tr>`).join('')}</tbody></table></div>`;}
 function pPlayers(m){const P=pool();const teams=[...new Set(P.map(p=>p.team))].sort();const poss=[...new Set(P.map(p=>p.pos))];const F=S.flt;
   const draw=()=>{let a=P.filter(p=>(F.all||p.elig||locks()[p.id])&&(F.pos==='ALL'||p.pos===F.pos)&&(F.team==='ALL'||p.team===F.team)&&(!F.q||p.name.toLowerCase().includes(F.q.toLowerCase())));
-    const [k,d]=S.sort;const g=k==='lev'?lev:(p=>p[k]??0);a.sort((x,y)=>d*(g(x)-g(y)));
-    $('#ptbl').innerHTML=tbl(a.slice(0,250),isSD()?['sal','csal','proj','floor','ceil','val','own','src']:['sal','proj','floor','ceil','val','own','lev','src'],1)+`<p style="font-size:11.5px;color:var(--text-3)">${a.length} players. *Own = estimated ownership proxy from projected value and salary tier, not real contest ownership. Lev = ceiling ÷ (own proxy + 3).</p>`;
+    const [k,d]=S.sort;const g=k==='lev'?lev:k==='boom'?boomPct:k==='levd'?levDiff:(p=>p[k]??0);a.sort((x,y)=>d*(g(x)-g(y)));
+    $('#ptbl').innerHTML=tbl(a.slice(0,250),isSD()?['sal','csal','proj','floor','ceil','val','boom','own','levd','src']:['sal','proj','floor','ceil','val','boom','own','levd','src'],1)+`<p style="font-size:11.5px;color:var(--text-3)">${a.length} players. <b>Boom%</b> = simulated probability of hitting 3x+ salary ceiling target. <b>*Own</b> = estimated ownership proxy from value rank, salary tier, and Vegas implied total. <b>Leverage</b> = Boom% − Est. Own%.</p>`;
     $('#ptbl').querySelectorAll('th[data-s]').forEach(th=>th.onclick=()=>{S.sort=[th.dataset.s,S.sort[0]===th.dataset.s?-S.sort[1]:-1];ls.set('sort',S.sort);draw()});bindRows($('#ptbl'));
     $('#ptbl').querySelectorAll('[data-lk]').forEach(b=>b.onclick=()=>{toggle(b.dataset.kd,b.dataset.lk);draw()});};
   m.innerHTML=staleNote()+`<div class="filters"><select id="fp"><option value="ALL">All positions</option>${poss.map(p=>`<option ${F.pos===p?'selected':''}>${p}</option>`).join('')}</select><select id="ft"><option value="ALL">All teams</option>${teams.map(t=>`<option ${F.team===t?'selected':''}>${t}</option>`).join('')}</select><input id="fq" placeholder="Search player" value="${esc(F.q)}"><label style="font-size:12px;color:var(--text-2);display:flex;gap:4px;align-items:center"><input type="checkbox" id="fall" ${F.all?'checked':''}>Show low-role / out</label><span style="color:var(--text-3);font-size:12px">Tap a player for edges · Lock/✕ feed the optimizer</span></div><div id="ptbl"></div>`;
   $('#fp').onchange=e=>{F.pos=e.target.value;draw()};$('#ft').onchange=e=>{F.team=e.target.value;draw()};$('#fq').oninput=e=>{F.q=e.target.value;draw()};$('#fall').onchange=e=>{F.all=e.target.checked;draw()};draw();}
 function pValue(m){const P=elig().filter(p=>p.proj>0&&p.pos!=='K');
   const val=[...P].filter(p=>p.proj>=6).sort((a,b)=>b.val-a.val).slice(0,15);const bar=P.filter(p=>p.sal<5000&&p.pos!=='DST').sort((a,b)=>b.val-a.val).slice(0,12);
-  const ceil=[...P].sort((a,b)=>b.ceil-a.ceil).slice(0,12);const chalk=[...P].sort((a,b)=>b.own-a.own).slice(0,10);const levs=P.filter(p=>p.proj>=8).sort((a,b)=>lev(b)-lev(a)).slice(0,10);
-  m.innerHTML=staleNote()+`<div class="note">Points per $1k = projected Book A points ÷ salary in thousands. Around 3x is the usual cash target and 4x+ is a smash. Ownership is an <b>estimated proxy</b> built from projected value and salary tier, not real contest data.</div>
-  <div class="grid two" style="margin-bottom:16px"><div class="card"><div class="card-head"><h2>Top value (pts per $1k)</h2></div>${tbl(val,['sal','proj','val','smash'])}</div><div class="card"><div class="card-head"><h2>Bargains under $5k</h2></div>${tbl(bar,['sal','proj','floor','val'])}</div></div>
-  <div class="grid two" style="margin-bottom:16px"><div class="card"><div class="card-head"><h2>Ceiling / GPP plays</h2><span class="sub">90th-percentile outcome</span></div>${tbl(ceil,['sal','proj','ceil','own'])}</div><div class="card"><div class="card-head"><h2>Chalk vs leverage</h2><span class="sub">likely most-played vs contrarian ceiling</span></div><h4 style="margin:0 0 6px;font-size:13px;color:var(--text-2)">Chalk (highest own proxy)</h4>${tbl(chalk,['sal','proj','own'])}<h4 style="margin:14px 0 6px;font-size:13px;color:var(--text-2)">Leverage (ceiling per ownership)</h4>${tbl(levs,['sal','ceil','own','lev'])}</div></div>`;bindRows(m);}
+  const ceil=[...P].sort((a,b)=>b.ceil-a.ceil).slice(0,12);const chalk=[...P].sort((a,b)=>b.own-a.own).slice(0,10);const levs=P.filter(p=>p.proj>=8).sort((a,b)=>levDiff(b)-levDiff(a)).slice(0,10);
+  m.innerHTML=staleNote()+`<div class="note">Points per $1k = projected Book A points ÷ salary in thousands. <b>Boom %</b> = simulated probability of hitting a 3x+ ceiling target across 1,000 correlated game draws. <b>Leverage Score</b> = Boom % − Estimated Ownership %.</div>
+  <div class="grid two" style="margin-bottom:16px"><div class="card"><div class="card-head"><h2>Top value (pts per $1k)</h2></div>${tbl(val,['sal','proj','val','boom','smash'])}</div><div class="card"><div class="card-head"><h2>Bargains under $5k</h2></div>${tbl(bar,['sal','proj','floor','val','boom'])}</div></div>
+  <div class="grid two" style="margin-bottom:16px"><div class="card"><div class="card-head"><h2>Ceiling / GPP plays</h2><span class="sub">90th-percentile outcome & Boom %</span></div>${tbl(ceil,['sal','proj','ceil','boom','own'])}</div><div class="card"><div class="card-head"><h2>Chalk vs leverage</h2><span class="sub">likely most-played vs contrarian Boom % edge</span></div><h4 style="margin:0 0 6px;font-size:13px;color:var(--text-2)">Chalk (highest own proxy)</h4>${tbl(chalk,['sal','proj','boom','own','levd'])}<h4 style="margin:14px 0 6px;font-size:13px;color:var(--text-2)">Top Leverage (Boom % − Est. Own %)</h4>${tbl(levs,['sal','ceil','boom','own','levd'])}</div></div>`;bindRows(m);}
 function pLineups(m){const sd=isSD();m.innerHTML=staleNote()+`<div class="note">Three ready-made builds per slate. <b>Safe</b> chases floor for cash and 50/50s. <b>Upside</b> chases ceiling and leverage for GPPs${sd?'. In showdown it works like a same-game parlay: pick a shootout script, captain a pass-game piece, and correlate both sides':' with a QB + 2 stack and a bring-back'}. Lineups update automatically with your locks and excludes. Tap any player for his edges.</div>${recBlock()}<p style="margin-top:14px"><button class="btn" id="exr">Export these 3 as Book A CSV</button> <a class="btn primary" href="#optimizer">Customize in optimizer</a></p>${sd?cptBlock():''}`;bindRows(m);
   $('#exr').onclick=()=>{const r=recs();exportCSV([r.safe,r.bal,r.up].filter(Boolean))};}
 function pOpt(m){const o=S.opt;const sd=isSD();const s=sl();const teams=[...new Set(pool().map(p=>p.team))];
@@ -275,7 +366,7 @@ function bindBuilder(m,o,read){m.querySelectorAll('[data-bs]').forEach(b=>b.oncl
   if($('#bRm'))$('#bRm').onclick=()=>{setSlot(S.bslot,null);route()};
   if($('#bClr'))$('#bClr').onclick=()=>{const k=lockK();delete S.lock[k];S.bld[k]=[];ls.set('lock',S.lock);ls.set('bld',S.bld);S.bslot=null;S.results=null;S.rec={};route()};
   if($('#bCsv'))$('#bCsv').onclick=()=>{const a=bslots();exportCSV([{rows:a.map((id,i)=>{const p=pool().find(x=>x.id===id);return {slot:SLOTS()[i],p,dkid:isSD()&&i===0?p.cid:p.id}})}])};
-  if($('#bAuto'))$('#bAuto').onclick=()=>{read();$('#bMsg').textContent='Solving around your picks…';setTimeout(()=>{const cfg=Object.assign({},o,{contest:o.contest==='gpp'?'bal':o.contest,minsal:Math.min(o.minsal,48000)});const R=optimize(cfg,1);
+  if($('#bAuto'))$('#bAuto').onclick=()=>{read();$('#bMsg').textContent='Solving around your highlights…';setTimeout(()=>{const cfg=Object.assign({},o,{contest:o.contest==='gpp'?'bal':o.contest,minsal:Math.min(o.minsal,48000)});const R=optimize(cfg,1);
     if(!R.length){$('#bMsg').innerHTML='<span style="color:var(--neg)">No valid lineup fits around these highlights. Free up salary or swap a slot.</span>';return}
     const a=bslots();const sl_=SLOTS();const rows=R[0].rows.filter(r=>!a.includes(r.p.id));
     if(isSD()&&!a[0]){const c=rows.findIndex(r=>r.slot==='CPT');if(c>=0){setSlot(0,rows[c].p.id);rows.splice(c,1);}}
