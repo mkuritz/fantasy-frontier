@@ -14,16 +14,18 @@ var H=function(h){return 'https://'+h+'.sportslabshq.com/'},BL=H('betlab');
 var S=[
  {k:'nfl',icon:'🏈',short:'NFL',name:'NFL Hub',host:'nfllab',bl:'nfl'},
  {k:'cfb',icon:'🏈',short:'CFB',name:'CFB Hub',host:'cfblab',bl:'cfb'},
- {k:'nba',icon:'🏀',short:'NBA',name:'NBA in Bet Lab',host:null,bl:'nba'},
+ {k:'nba',icon:'🏀',short:'NBA',name:'NBA Hub',host:'nbahub',url:'https://betlab.sportslabshq.com/nba-hub.html',bl:'nba'},
  {k:'cbb',icon:'🏀',short:'CBB',name:'CBB Hub',host:'cbblab',bl:'ncaamb'},
  {k:'nhl',icon:'🏒',short:'NHL',name:'NHL Lab',host:'nhllab',bl:'nhl'},
  {k:'mlb',icon:'⚾',short:'MLB',name:'MLB Lab',host:'mlblab',bl:'mlb'},
  {k:'soccer',icon:'⚽',short:'Soccer',name:'Soccer Hub',host:'soccerlab',bl:'soccer'}];
 function betlab(k){var s=S.filter(function(x){return x.k===k||x.bl===k})[0];return BL+'#sport='+(s?s.bl:k)}
-S.forEach(function(s){s.url=s.host?H(s.host):betlab(s.k);s.blurl=betlab(s.k)});
+S.forEach(function(s){s.url=s.url||(s.host?H(s.host):betlab(s.k));s.blurl=betlab(s.k)});
 var T=[{icon:'💎',name:'Bet Lab',url:BL},{icon:'⚡',name:'Arb Lab',url:H('arblab')},{icon:'🎯',name:'Fantasy Frontier',url:H('fantasyfrontier')},{icon:'🏆',name:'Fantasy Front Office',url:H('frontoffice')},{icon:'🧢',name:'GM Hubs',url:'https://sportslabshq.com/gm-hub.html'},{icon:'🧭',name:'SportsLabs HQ',url:H('hq')},{icon:'🏠',name:'Sports Labs home',url:'https://sportslabshq.com/'}];
 var hn=location.hostname,sub=(hn.match(/betlab|nfllab|cfblab|cbblab|nhllab|mlblab|soccerlab/)||[hn.split('.')[0]])[0],q=new URLSearchParams(location.search);
 var cur=(S.filter(function(s){return s.host===sub||s.k===sub})[0]||{}).k||null;
+if(location.pathname.indexOf('nba-hub')>=0)cur='nba';
+else if(location.pathname.indexOf('cbb-hub')>=0)cur='cbb';
 if(q.get('sls'))cur=q.get('sls'); /* local/preview testing: ?sls=nfl */
 var onBL=sub==='betlab'||q.get('slsbl')==='1';
 function blCur(){var m=location.hash.match(/[#&]sport=(\w+)/);return m?m[1]:null}
@@ -38,7 +40,7 @@ function rows(o){var bc=onBL?blCur():null;return S.map(function(s){var here=(s.k
   var bl=s.host?'<a class="sls-bl" href="'+(onBL?'./index.html#sport='+s.bl:s.blurl)+'" data-slsbl="'+s.bl+'" title="'+esc(s.short)+' in Bet Lab" aria-label="'+esc(s.short)+' in Bet Lab">Bet Lab</a>':'';
   return '<div class="sls-row">'+hub+bl+'</div>'}).join('')}
 function tools(){return T.filter(function(t){return !(onBL&&t.name==='Bet Lab')&&!((cur||onBL)&&(t.name==='GM Hubs'||t.name==='Fantasy Front Office'))&&t.url.indexOf('//'+location.hostname+'/')<0}).map(function(t){return '<a href="'+t.url+'">'+t.icon+' '+esc(t.name)+'</a>'}).join('')}
-function curName(){if(onBL){var bc=blCur(),x=S.filter(function(t){return !t.host&&t.bl===bc})[0];return x?x.name:'Bet Lab'}var c=S.filter(function(t){return t.k===cur})[0];return c?c.name:null}
+function curName(){if(cur){var c=S.filter(function(t){return t.k===cur})[0];if(c)return c.name}if(onBL){var bc=blCur(),x=S.filter(function(t){return !t.host&&t.bl===bc})[0];return x?x.name:'Bet Lab'}return null}
 function mount(el,o){o=o||{};if(!o.label&&(cur||onBL))o.label=o.mode==='menu'?curName():(curName()+' ▾');if(!el)return null;style();var w=document.createElement(o.mode==='menu'?'details':'div');w.className='sls sls-'+(o.mode||'list');w._o=o;
  if(o.mode==='menu'){w.className+=' sls-dd';if(o.compact)w.className+=' sls-compact';w.innerHTML='<summary aria-label="Switch sport" title="Sports"><span class="sls-ico" aria-hidden="true">🏆</span><span class="sls-lbl">'+esc(o.label||'Sports')+'</span></summary><div class="sls-pan" role="menu"><div class="sls-cap">Sports</div>'+rows(o)+(o.tools===false?'':'<div class="sls-cap">More from Sports Labs</div>'+tools())+'</div>';
   var bg=o.bg;if(!bg){var n=el;while(n&&n.nodeType===1){var c=getComputedStyle(n).backgroundColor;var al=(c.match(/rgba\([^)]*,\s*([\d.]+)\)/)||[])[1];if(c&&c!=='transparent'&&(al===undefined||+al>=.95)){bg=c;break}n=n.parentElement}}w.querySelector('.sls-pan').style.background=bg||'#fff';
@@ -66,7 +68,7 @@ var me=document.currentScript;if(me&&me.hasAttribute('data-auto')){var sel=me.ge
  var mo=new MutationObserver(function(){if(!document.querySelector('.sls')&&!run._t){run._t=setTimeout(function(){run._t=0;auto(sel)},50)}});addEventListener('load',function(){mo.observe(document.body,{childList:true,subtree:true});setTimeout(function(){mo.disconnect()},30000)})}
 
 /* horizontal sport bar (sports hubs + Bet Lab only): flip through every sport and back */
-function barHTML(){var bc=null;if(onBL){bc=blCur();if(!bc){var t=document.querySelector('button.on[data-s]');bc=t?t.getAttribute('data-s'):null}}return S.map(function(s){var here=(s.k===cur)||(onBL&&bc===s.bl);var u=(onBL&&!s.host)?'./index.html#sport='+s.bl:s.url;return '<a href="'+u+'" data-sls="'+s.k+'"'+(here?' aria-current="page"':'')+'>'+s.icon+' '+esc(s.short)+'</a>'}).join('')}
+function barHTML(){var bc=null;if(onBL&&!cur){bc=blCur();if(!bc){var t=document.querySelector('button.on[data-s]');bc=t?t.getAttribute('data-s'):null}}return S.map(function(s){var here=(s.k===cur)||(!cur&&onBL&&bc===s.bl);var u=(onBL&&!s.host)?'./index.html#sport='+s.bl:s.url;return '<a href="'+u+'" data-sls="'+s.k+'"'+(here?' aria-current="page"':'')+'>'+s.icon+' '+esc(s.short)+'</a>'}).join('')}
 function ensureBar(){if(!(cur||onBL)||!document.body)return;if(document.querySelector('#v2bar .sp')){var o=document.getElementById('slsb');if(o)o.remove();ensureBar.own=1;return}if(ensureBar.own)return;var b=document.getElementById('slsb');
  if(!b){style();b=document.createElement('nav');b.id='slsb';b.className='slsb';b.setAttribute('aria-label','Sports');document.body.insertBefore(b,document.body.firstChild)}
  var h=barHTML();if(b._h!==h){b._h=h;b.innerHTML=h;var a=b.querySelector('[aria-current]');if(a)b.scrollLeft=a.offsetLeft-(b.clientWidth-a.offsetWidth)/2}}
@@ -74,5 +76,5 @@ if(cur||onBL){if(document.readyState==='loading')document.addEventListener('DOMC
  addEventListener('hashchange',ensureBar);if(onBL)document.addEventListener('click',function(e){if(e.target.closest('button[data-s]'))setTimeout(ensureBar,60)});addEventListener('load',ensureBar);
  new MutationObserver(function(){if((!document.getElementById('slsb')||(!ensureBar.own&&document.querySelector('#v2bar .sp')))&&!ensureBar._t)ensureBar._t=setTimeout(function(){ensureBar._t=0;ensureBar()},50)}).observe(document.documentElement,{childList:true,subtree:true})}
 window.SLS={sports:S,tools:T,cur:cur,betlab:betlab,mount:mount,bar:ensureBar,
- top:function(){return S.map(function(s){return [s.short,s.k===cur?'index.html':s.url,s.k]})}};
+ top:function(){return S.map(function(s){return [s.short,s.k===cur?(s.k==='nba'?'nba-hub.html':'index.html'):s.url,s.k]})}};
 })();
