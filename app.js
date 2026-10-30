@@ -46,7 +46,7 @@ function shell(){
 function route(){S.page=(location.hash||'#slate').slice(1).split('/')[0];if(!PAGES.find(p=>p[0]===S.page))S.page='slate';shell();const m=$('#main');
   const s=sl();
   if(!s&&S.page!=='method'&&S.page!=='film'&&S.page!=='track'){m.innerHTML=noSlate();return}
-  ({track:pTrack,best:pBest,film:pFilm,ros:pRos,slate:pSlate,lineups:pLineups,players:pPlayers,value:pValue,optimizer:pOpt,games:pGames,method:pMethod})[S.page](m);m.scrollTop=0;window.scrollTo(0,0);}
+  ({track:pTrack,best:pBest,film:pFilm,ros:pRos,slate:pSlate,lineups:pLineups,players:pPlayers,value:pValue,optimizer:pOpt,games:pGames,method:pMethod})[S.page](m);requestAnimationFrame(()=>{m.scrollTop=0;window.scrollTo(0,0)});}
 function noSlate(){return `<div class="hero-ff"><div><h2>${esc(KINDS[S.kind])} salaries aren't posted yet</h2><p>Book A usually posts the next Thursday showdown early in the week. Fantasy Frontier checks every few hours and will load it automatically, so check back soon. Sunday and Monday slates are available now from the slate switcher.</p></div></div>`}
 function staleNote(){const s=sl();let h='';if(s.stale)h+=`<div class="note warn">Book A hasn't posted a new ${esc(KINDS[S.kind])} slate yet. You're looking at the most recent one available (${esc(slDate(s))}).</div>`;
   const now=Date.now();if(!s.stale&&new Date(s.start+'-04:00').getTime()<now)h+=`<div class="note">This slate has locked (${esc(slDate(s))}). It stays up for review until the next one posts.</div>`;return h}
