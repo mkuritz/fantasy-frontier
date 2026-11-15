@@ -14,13 +14,38 @@ const PAGES=[['slate','Slate dashboard','M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3z
 const ico=d=>`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
 const FEES={cash:{10:{l:.30},20:{l:.40},50:{l:.50},100:{l:.60}},gpp:{10:{g:.65,b:.30,noise:.10},20:{g:.55,b:.22,noise:.08},50:{g:.48,b:.15,noise:.06},100:{g:.40,b:.10,noise:.05}}};
 const S={meta:null,slates:{},kind:ls.get('kind',null),page:'slate',lock:ls.get('lock',{}),excl:ls.get('excl',{}),opt:ls.get('opt',{contest:'gpp',fee:20,n:5,exp:60,uniq:2,stack:1,bring:1,minsal:49000,script:'any'}),results:null,rec:{},sort:ls.get('sort',['proj',-1]),flt:{pos:'ALL',team:'ALL',q:''}};
+// Slate start is a naive Eastern wall time (e.g. 2026-11-15T13:00:00). Interpret it as
+// America/New_York (EST/EDT), never a hard-coded EDT or EST offset.
+function etInstant(start){
+  const s=String(start||'');
+  if(/[zZ]|[+-]\d{2}:\d{2}$/.test(s)) return new Date(s);
+  const m=s.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if(!m) return new Date(s);
+  const y=+m[1], mo=+m[2]-1, d=+m[3], h=+m[4], mi=+m[5], sec=+(m[6]||0);
+  const parts=ms=>{
+    const f=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+    const p=Object.fromEntries(f.formatToParts(new Date(ms)).filter(x=>x.type!=='literal').map(x=>[x.type,x.value]));
+    return [+p.year,+p.month,+p.day,+p.hour,+p.minute,+p.second];
+  };
+  let t=Date.UTC(y,mo,d,h+5,mi,sec);
+  for(let i=0;i<4;i++){
+    const [Y,M,D,H,MI,S]=parts(t);
+    const delta=Date.UTC(y,mo,d,h,mi,sec)-Date.UTC(Y,M-1,D,H,MI,S);
+    t+=delta;
+    if(delta===0) break;
+  }
+  return new Date(t);
+}
+function etLockLabel(d){
+  return d.toLocaleString('en-US',{timeZone:'America/New_York',weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET lock';
+}
 
 async function load(){
   const j=u=>fetch(u+'?v='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null);
   S.meta=await j('data/meta.json');S.trk=await j('data/track/results.json');S.ver=await j('data/track/verify.json');S.snaps=await fetch('data/track/lineups.jsonl?v='+Date.now()).then(r=>r.ok?r.text():'').then(t=>t.trim().split('\n').filter(Boolean).map(l=>{try{return JSON.parse(l)}catch(e){return null}}).filter(Boolean)).catch(()=>[]);S.film=await j('data/film.json');S.rr=await fetch('https://betlab.sportslabshq.com/data/early_injury_adjust.json?v='+Math.floor(Date.now()/180000)).then(r=>r.ok?r.json():null).then(d=>(d&&d.role_returns)||[]).catch(()=>[]);
   for(const k of Object.keys(KINDS)){if(S.meta&&S.meta.slates&&(!S.meta.slates[k]||S.meta.slates[k].missing))continue;const d=await j('data/slate_'+k+'.json');if(d)S.slates[k]=d;}
   if(!S.kind||!S.slates[S.kind]){const now=Date.now();const ks=Object.keys(KINDS).filter(k=>S.slates[k]);
-    const upcoming=ks.filter(k=>!S.slates[k].stale&&new Date(S.slates[k].start+'-04:00').getTime()>now-4*3600e3).sort((a,b)=>S.slates[a].start.localeCompare(S.slates[b].start));
+    const upcoming=ks.filter(k=>!S.slates[k].stale&&etInstant(S.slates[k].start).getTime()>now-4*3600e3).sort((a,b)=>S.slates[a].start.localeCompare(S.slates[b].start));
     S.kind=upcoming[0]||ks[0]||'sun';}
   route();
 }
@@ -49,8 +74,8 @@ function route(){S.page=(location.hash||'#slate').slice(1).split('/')[0];if(!PAG
   ({track:pTrack,best:pBest,film:pFilm,ros:pRos,slate:pSlate,lineups:pLineups,players:pPlayers,value:pValue,optimizer:pOpt,games:pGames,method:pMethod})[S.page](m);requestAnimationFrame(()=>{m.scrollTop=0;window.scrollTo(0,0)});}
 function noSlate(){return `<div class="hero-ff"><div><h2>${esc(KINDS[S.kind])} salaries aren't posted yet</h2><p>Book A usually posts the next Thursday showdown early in the week. Fantasy Frontier checks every few hours and will load it automatically, so check back soon. Sunday and Monday slates are available now from the slate switcher.</p></div></div>`}
 function staleNote(){const s=sl();let h='';if(s.stale)h+=`<div class="note warn">Book A hasn't posted a new ${esc(KINDS[S.kind])} slate yet. You're looking at the most recent one available (${esc(slDate(s))}).</div>`;
-  const now=Date.now();if(!s.stale&&new Date(s.start+'-04:00').getTime()<now)h+=`<div class="note">This slate has locked (${esc(slDate(s))}). It stays up for review until the next one posts.</div>`;return h}
-function slDate(s){const d=new Date(s.start+'-04:00');return d.toLocaleString([], {weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET lock'}
+  const now=Date.now();if(!s.stale&&etInstant(s.start).getTime()<now)h+=`<div class="note">This slate has locked (${esc(slDate(s))}). It stays up for review until the next one posts.</div>`;return h}
+function slDate(s){return etLockLabel(etInstant(s.start))}
 const pool=()=>sl().players.filter(p=>p.sal);const elig=()=>pool().filter(p=>p.elig);
 const posTag=p=>`<span class="pos-tag pos-${p}">${p}</span>`;
 const plCell=p=>`<span class="pl">${posTag(p.pos)}<span><b>${esc(p.name)}</b>${p.shot?' <span class="chip hot" style="font-size:10px">their shot</span>':''} <span class="t">${esc(p.team)} ${p.opp?'v '+esc(p.opp):''}${p.status&&p.status!=='Active'?` · <span style="color:var(--warn)">${esc(p.status)}</span>`:''}</span></span></span>`;
